@@ -81,6 +81,9 @@ ns.defaults = {
     modules = {},
     chars = {},
     guides = {},
+    prices = {},
+    goldHistory = {},
+    shopping = {},
 }
 ns.charDefaults = {
     modules = {},

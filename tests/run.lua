@@ -230,6 +230,53 @@ test("session rates", function()
     eq(JD.Short(12345), "12.3k"); eq(JD.Short(999), "999"); eq(JD.XPPercent(50, 200), 25)
 end)
 
+loadInto(ns, "Modules/MarketData.lua")
+local MD = ns.MarketData
+
+test("market: lowest unit price per item from a full scan", function()
+    local best = MD.LowestUnitPrices({
+        { itemID = 1, count = 10, buyout = 1000 }, { itemID = 1, count = 1, buyout = 90 },
+        { itemID = 2, count = 5, buyout = 0 }, { itemID = 3, count = 2, buyout = 50 },
+    })
+    eq(best[1], 90); eq(best[2], nil, "no buyout ignored"); eq(best[3], 25)
+    local store = {}
+    eq(MD.StorePrices(store, best, 100), 2); eq(store[1].p, 90); eq(store[1].t, 100)
+end)
+
+test("market: recipe profit treats unknown prices as unknown, never zero", function()
+    local prices = { [10] = 100, [11] = 50, [20] = 400 }
+    local function priceOf(id) return prices[id] end
+    local r = MD.RecipeProfit({ output = 20, qty = 2, reagents = { { id = 10, n = 2 }, { id = 11, n = 1 } } }, priceOf)
+    eq(r.cost, 250); eq(r.value, 800); eq(r.profit, 550); eq(#r.missing, 0)
+    local u = MD.RecipeProfit({ output = 20, qty = 1, reagents = { { id = 10, n = 1 }, { id = 99, n = 3 } } }, priceOf)
+    eq(u.cost, nil); eq(u.profit, nil); eq(u.missing[1], 99); eq(u.partialCost, 100)
+    local list = MD.RankByProfit({
+        { name = "B", result = { profit = 10 } }, { name = "A", result = {} }, { name = "C", result = { profit = 500 } },
+    })
+    eq(list[1].name, "C"); eq(list[2].name, "B"); eq(list[3].name, "A")
+end)
+
+test("shopping list: adds reagents across recipes, missing first", function()
+    local recipes = {
+        [1] = { reagents = { { id = 100, n = 2 }, { id = 200, n = 1 } } },
+        [2] = { reagents = { { id = 100, n = 1 } } },
+    }
+    local rows = MD.ShoppingNeeds({ { recipeID = 1, count = 3 }, { recipeID = 2, count = 1 }, { recipeID = 9, count = 1 } },
+        recipes, function(id) return id == 200 and 10 or 4 end)
+    eq(#rows, 2)
+    eq(rows[1].itemID, 100); eq(rows[1].need, 7); eq(rows[1].have, 4); eq(rows[1].missing, 3)
+    eq(rows[2].itemID, 200); eq(rows[2].need, 3); eq(rows[2].missing, 0)
+end)
+
+test("age, gold series and item search", function()
+    eq(MD.Age(30), "just now"); eq(MD.Age(600), "10m ago"); eq(MD.Age(7200), "2h ago"); eq(MD.Age(200000), "2d ago")
+    local values, max = MD.GoldSeries({ ["d2"] = 100, ["d4"] = 300 }, { "d1", "d2", "d3", "d4" })
+    eq(table.concat(values, ","), "0,100,100,300"); eq(max, 300)
+    local hits = MD.SearchNames({ [1] = "Copper Ore", [2] = "Tin Ore", [3] = "Copper Bar" }, "copper")
+    eq(#hits, 2); eq(hits[1], 3, "sorted by name")
+    eq(#MD.SearchNames({ [1] = "A" }, "a"), 0, "needs 2 letters")
+end)
+
 ---------------------------------------------------------------------------
 -- Part 2: smoke test with a mocked WoW API
 ---------------------------------------------------------------------------
@@ -387,6 +434,34 @@ env.GetNumQuestChoices = function() return 0 end
 env.GetQuestReward = record("reward")
 env.C_GossipInfo = { GetActiveQuests = function() return {} end, GetAvailableQuests = function() return {} end }
 
+-- Phase 3: auction house, professions, dates
+env.date = os.date
+env.UnitFactionGroup = function() return "Alliance", "Alliance" end
+env.AuctionHouseFrame = newFrame()
+env.GetProfessions = function() return 1, nil, 3 end
+env.GetProfessionInfo = function(i) if i == 1 then return "Mining", 136248, 75, 150 end return "Cooking", 133971, 20, 75 end
+local replicate = { { 2770, 20, 2000 }, { 2770, 1, 90 }, { 2840, 5, 1500 } }
+env.C_AuctionHouse = {
+    GetBrowseResults = function() return { { itemKey = { itemID = 2589 }, minPrice = 55 } } end,
+    GetCommoditySearchResultInfo = function(id) return { itemID = id, unitPrice = 77 } end,
+    GetNumItemSearchResults = function() return 1 end,
+    GetItemSearchResultInfo = function() return { buyoutAmount = 5000 } end,
+    ReplicateItems = record("replicate"),
+    GetNumReplicateItems = function() return #replicate end,
+    GetReplicateItemInfo = function(i)
+        local r = replicate[i + 1]
+        return nil, nil, r[2], 1, true, 1, nil, 0, 0, r[3], 0, nil, nil, nil, nil, 0, r[1], true
+    end,
+}
+env.C_TradeSkillUI = {
+    IsNPCCrafting = function() return false end,
+    GetBaseProfessionInfo = function() return { professionName = "Mining" } end,
+    GetFilteredRecipeIDs = function() return { 2657 } end,
+    GetRecipeInfo = function() return { name = "Smelt Copper", learned = true, icon = 1 } end,
+    GetRecipeSchematic = function() return { outputItemID = 2840, quantityMin = 1,
+        reagentSlotSchematics = { { required = true, quantityRequired = 1, reagents = { { itemID = 2770 } } } } } end,
+}
+
 local function loadTOC()
     local addonNS = {}
     local toc = assert(io.open(ADDON .. "HawarysAddon.toc")):read("*a")
@@ -494,12 +569,47 @@ test("smoke: journey auto mode, guide import, next/back, automation guarded", fu
     for _, cmd in ipairs({ "guide", "guide", "journey" }) do env.SlashCmdList.HAWARYSADDON(cmd) end
 end)
 
+test("smoke: market prices, full scan, professions, shopping list, alts", function()
+    local Mk, Pr, Al = A.modules.market, A.modules.professions, A.modules.alts
+    truthy(Mk:IsEnabled() and Pr:IsEnabled() and Al:IsEnabled(), "phase 3 modules enabled")
+    fire("AUCTION_HOUSE_SHOW")
+    fire("AUCTION_HOUSE_BROWSE_RESULTS_UPDATED")
+    eq(Mk:Price(2589), 55)
+    fire("COMMODITY_SEARCH_RESULTS_UPDATED", 2771)
+    eq(Mk:Price(2771), 77)
+    Mk:StartScan()
+    eq(calls.replicate, 1)
+    fire("REPLICATE_ITEM_LIST_UPDATE")
+    eq(Mk:Price(2770), 90, "lowest unit price from the full scan")
+    eq(Mk:Price(2840), 300)
+    Mk:StartScan() -- 15 minute cooldown
+    eq(calls.replicate, 1)
+
+    Pr:ScanRanks()
+    local me = env.HawarysAddonDB.chars["Tester-Forever"]
+    eq(#me.profs, 2); eq(me.profs[2].name, "Mining"); eq(me.profs[2].rank, 75)
+    Pr:ScanRecipes()
+    eq(me.recipes.Mining[2657].output, 2840)
+    Pr:AddToList(2657, 3)
+    local rows = Pr:ShoppingRows()
+    eq(rows[1].itemID, 2770); eq(rows[1].need, 3)
+    Pr:AddToList(2657, -3)
+    eq(#env.HawarysAddonDB.shopping, 0)
+
+    Al:Record()
+    local today = os.date("%Y-%m-%d")
+    truthy(env.HawarysAddonDB.goldHistory[today], "gold history recorded")
+    for _, page in ipairs({ "market", "professions", "alts" }) do A:OpenWindow(page) end
+    Pr:AddToList(2657, 2)
+    A:OpenWindow("professions")
+end)
+
 test("smoke: native theme builds too", function()
     env.HawarysAddonDB.general.theme = "native"
     local B = loadTOC()
     fire("ADDON_LOADED", "HawarysAddon")
     fire("PLAYER_LOGIN")
-    for _, page in ipairs({ "home", "general", "journey", "gear", "bags", "qol" }) do B:OpenWindow(page) end
+    for _, page in ipairs({ "home", "general", "journey", "gear", "bags", "qol", "market", "professions", "alts" }) do B:OpenWindow(page) end
 end)
 
 print(string.format("\n%d passed, %d failed", passed, failed))

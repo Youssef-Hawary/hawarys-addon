@@ -5,7 +5,7 @@
 **One addon for World of Warcraft: Forever** that brings together what the most popular addons do, with one clean Hawary look and one settings window.
 
 - **Game:** World of Warcraft: Forever, client 1.60.1, `## Interface: 16001`
-- **Version:** 0.2.0 (Phase 2: Journey & Guide)
+- **Version:** 0.3.0 (Phase 3: Professions, Market, Alts & Gold)
 - **License:** GPL-3.0-or-later. Free forever, code fully visible, as Blizzard's add-on policy requires.
 
 ## What's in it
@@ -15,6 +15,9 @@
 | **Journey & Guide** | Zygor, RestedXP, Questie, NAG Journey, Overwolf stats | A floating **step-by-step guide window** with the current step, its objectives and the next steps. A big **direction arrow** with distance. **Blizzard's own map pin and in-world marker** for the current step. **Auto Journey** builds your route from your own quest log (finished quests first, then the nearest objectives). **Import step guides** ([format](docs/GUIDE-FORMAT.md)). **Session stats** (XP/hour, time to level). Level-up notice. Optional quest automation: off by default, Shift pauses it, never in combat. |
 | **Gear & Upgrades** | Pawn, GearQuest, NAG Journey | Stat weights for your class and spec. Tooltip shows `+12% upgrade` or `-5% vs equipped`, plus the exact item level and item ID. Green arrows on upgrades in your bags. **Marks the best quest reward** (your biggest upgrade, or what sells for the most) and can pre-select it. You still click Complete. Notices when you loot an upgrade. |
 | **Bags** | Baganator, Altoholic | Remembers every character's bags, bank and gear. Item tooltips show who has how many (bags / bank / worn). Total gold across characters on the Home page. |
+| **Professions** | SkillUp, Profession Shopping List, ForeverProfit | Profession ranks with progress bars. The recipes you know, **ranked by profit** with auction prices (unknown prices stay "?", never free). A **shopping list** that checks reagents against every character's bags and bank, with the cost of what's missing. Reagent tooltips show "have / need". |
+| **Market** | Auctionator | Remembers **auction house prices** from your normal browsing and searches, plus a **Hawary Scan** button for a full scan (once per 15 min, read in chunks so the game doesn't freeze). Tooltips show the AH price and its age. Prices are kept per auction house. It **never buys, bids or posts**. |
+| **Alts & Gold** | Altoholic, Overwolf character snapshot | Every character's level, item level, gold, professions and last login. A **gold chart** (7–90 days) and an **item search across all your characters**. |
 | **Quality of Life** | Leatrix Plus, Leatrix Maps, BlizzMove | Auto repair (guild funds optional), sell junk, instant loot, accept invites from friends & guild, decline duels, max camera distance, coordinates on the minimap and world map, drag Blizzard windows. |
 
 The **Home** dashboard shows your character, gold across all characters, average item level, upgrades waiting in your bags, every module's on/off switch and what's coming next.
@@ -27,7 +30,7 @@ Everything is also in Blizzard's own **Options → AddOns → Hawary's Addon** m
 
 ## Coming next
 
-Talents & Training · Professions · Market · Dungeons (with an Overwolf-style adventure planner) · Discovery (your own map layer: rares, herbs and ore you found, books) · Alts & Gold · "What now?" button · Macro Helper (normal Blizzard macros only).
+Dungeons (with an Overwolf-style adventure planner) · Discovery (your own map layer: rares, herbs and ore you found, books) · "What now?" button · Journey Diary · Talents & Training · Macro Helper (normal Blizzard macros only).
 
 What we learned from the changelogs of Leatrix, Questie, ClassicUI Forever, NaowhForever, SkillUp, BlizzMove and the Overwolf apps is in [docs/RESEARCH.md](docs/RESEARCH.md).
 

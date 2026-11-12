@@ -20,7 +20,7 @@ Status: ✅ done (static checks + mocked tests pass; **in-game check not run yet
 | R11b | Ready-made Forever routes (1–20, then to 60) | 🔜 | | Needs verified quest IDs and coordinates, never invented |
 | R18 | Overwolf-style features inside the game | 🟡 session stats done | Journey | Adventure planner → Dungeons; own map layer → Discovery |
 | R12 | Talents & Training | 🔜 Phase 2 | | |
-| R13 | Professions, Market, Alts | 🔜 Phase 3 | | |
+| R13 | Professions, Market, Alts | ✅ 0.3.0 | Modules/Professions, Market, Alts, MarketData | Open a profession window → recipes listed with profit. Browse the AH → prices in tooltips. Full scan max once per 15 min. Alts page lists every character with a gold chart and search |
 | R14 | Dungeons, Discovery, "What now?", Journey Diary | 🔜 Phase 4 | | |
 | R15 | Macro Helper (normal Blizzard macros only) | 🔜 | | |
 | R16 | GSE-style sequence macros | ❌ dropped for safety | docs/SAFETY.md | |

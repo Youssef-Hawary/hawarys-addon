@@ -54,6 +54,9 @@ REVIEWED = {
     "QuestGetAutoAccept", "SelectActiveQuest", "SelectAvailableQuest",
     # FrameXML table (UiMapPoint.CreateFromCoordinates in framexml/mixins.md)
     "UiMapPoint",
+    # called by Blizzard's own Forever profession UI (Blizzard_Professions/Camelot) and
+    # the Forever auction house window (Blizzard_AuctionHouseUI)
+    "GetProfessions", "GetProfessionInfo", "AuctionHouseFrame",
 }
 
 

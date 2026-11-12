@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.0 (2026-11-12) – Phase 3: Professions, Market, Alts & Gold
+
+- **Professions:**
+  - Profession ranks with bars.
+  - A recipe snapshot read while your own profession window is open (never NPC, guild or linked windows).
+  - **Most profitable recipes** using Market prices. Unknown prices show "?", never free.
+  - A **shopping list** checked against every character's bags and bank, with the cost of what's still missing, and reagent tooltips showing have / need.
+- **Market:**
+  - Remembers auction house prices from browsing, commodity searches and item searches.
+  - **Hawary Scan** button for a full scan (once per 15 minutes, read in chunks).
+  - The AH price and its age appear in tooltips.
+  - Prices are kept per auction house.
+  - Never buys, bids, posts or cancels.
+- **Alts & Gold:**
+  - All characters with level, item level, gold, professions and last login. Shift-click to forget a deleted character.
+  - Gold chart (7–90 days, hover for each day).
+  - **Item search across all characters.**
+- Tests: 28 (price math, unknown-price rule, shopping list, gold series, search, plus auction house, profession and alts smoke tests).
+
 ## 0.2.0 (2026-11-12) – Phase 2: Journey & Guide
 
 - **Journey & Guide** module (Zygor / RestedXP / Questie / NAG Journey style):

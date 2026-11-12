@@ -44,6 +44,8 @@ These are the same things Leatrix Plus, Questie and Baganator have done for year
 - Journey guide window, arrow and Blizzard map pin: display only. It uses Blizzard's own super-tracking and user waypoint, which the map UI itself offers.
 - **Quest auto accept / turn-in** (Journey): the same feature Questie, Polestar Guides and Leatrix Plus ship. It's **off by default**, works only after **you** talk to the NPC, is paused while **Shift** is held, never runs in combat, never picks between several rewards and never pays gold for you.
 
+- Market reads auction results you already see (browse and search), plus one full scan when **you** click Scan (Blizzard's own limit is once per 15 minutes). It **never buys, bids, posts or cancels**. Professions only reads your own recipe list while you have it open and **never crafts**.
+
 ## Never-build list (lessons from other addons' changelogs, see RESEARCH.md)
 Layer detection (Blizzard obfuscated GUIDs to stop it), reading minimap herb or ore dots (blocked in Forever), raid marks, chat or emote sends or crafting from code without a click, auto-confirming enchant-replace popups, telemetry that's on by default, paid or premium features.
 
