@@ -125,6 +125,111 @@ test("best quest reward: upgrade beats value; value fallback", function()
     eq(D.BestReward({ { index = 1 }, { index = 2 } }), nil)
 end)
 
+loadInto(ns, "Modules/JourneyData.lua")
+local JD = ns.JourneyData
+
+local SAMPLE_GUIDE = [[
+# a test guide
+guide: Test Valley 1-5
+level: 1-5
+map: 1429
+accept 100 First Steps @ 48.2 42.9
+complete 100 Kill wolves
+turnin 100
+goto 52.1,45.0 The Inn map=1430
+level 4 Grind a bit
+train
+hearth Goldshire
+note Read the sign
+]]
+
+test("guide parser: header, step types, coordinates, map", function()
+    local g, errors = JD.ParseGuide(SAMPLE_GUIDE)
+    eq(#errors, 0, table.concat(errors, "; "))
+    eq(g.name, "Test Valley 1-5"); eq(g.minLevel, 1); eq(g.maxLevel, 5); eq(g.map, 1429)
+    eq(#g.steps, 8)
+    local s = g.steps[1]
+    eq(s.type, "accept"); eq(s.questID, 100); eq(s.text, "First Steps"); eq(s.x, 48.2); eq(s.y, 42.9); eq(s.map, 1429)
+    eq(g.steps[3].type, "turnin"); eq(g.steps[3].text, "")
+    local go = g.steps[4]
+    eq(go.type, "goto"); eq(go.x, 52.1); eq(go.y, 45.0); eq(go.text, "The Inn"); eq(go.map, 1430)
+    eq(g.steps[5].level, 4); eq(g.steps[5].text, "Grind a bit")
+    eq(g.steps[7].text, "Goldshire")
+end)
+
+test("guide parser: reports mistakes with line numbers", function()
+    local g, errors = JD.ParseGuide("accept\nacept 5\ngoto nowhere\nlevel high\ngoto 150 20\nturnin 7")
+    eq(#g.steps, 1, "only the valid turnin survives")
+    eq(#errors, 5)
+    truthy(errors[1]:find("line 1"), errors[1])
+    truthy(errors[2]:find("unknown step"), errors[2])
+    local _, none = JD.ParseGuide("# only comments")
+    truthy(none[1]:find("no steps"))
+end)
+
+test("step completion rules", function()
+    local state = { on = { [1] = true }, flagged = { [2] = true }, complete = { [1] = true }, level = 5, dist = 8, manual = {} }
+    local ctx = {
+        onQuest = function(id) return state.on[id] end,
+        flagged = function(id) return state.flagged[id] end,
+        complete = function(id) return state.complete[id] end,
+        level = function() return state.level end,
+        distance = function() return state.dist end,
+        manual = function(step) return state.manual[step.line] end,
+    }
+    truthy(JD.IsDone({ type = "accept", questID = 1 }, ctx))
+    truthy(JD.IsDone({ type = "accept", questID = 2 }, ctx), "already turned in counts as accepted")
+    truthy(not JD.IsDone({ type = "accept", questID = 3 }, ctx))
+    truthy(JD.IsDone({ type = "complete", questID = 1 }, ctx))
+    truthy(not JD.IsDone({ type = "turnin", questID = 1 }, ctx))
+    truthy(JD.IsDone({ type = "turnin", questID = 2 }, ctx))
+    truthy(JD.IsDone({ type = "level", level = 5 }, ctx))
+    truthy(not JD.IsDone({ type = "level", level = 6 }, ctx))
+    truthy(JD.IsDone({ type = "goto", x = 1, y = 1 }, ctx), "within 12 yards")
+    state.dist = 40
+    truthy(not JD.IsDone({ type = "goto", x = 1, y = 1 }, ctx))
+    truthy(not JD.IsDone({ type = "train", line = 9 }, ctx))
+    state.manual[9] = true
+    truthy(JD.IsDone({ type = "train", line = 9 }, ctx), "ticked off by the player")
+    local steps = { { type = "accept", questID = 1 }, { type = "turnin", questID = 2 }, { type = "turnin", questID = 1 } }
+    eq(JD.CurrentIndex(steps, 1, ctx), 3)
+    eq(JD.CurrentIndex({ { type = "turnin", questID = 2 } }, 1, ctx), 2, "finished guide")
+end)
+
+test("auto journey: turn-ins first, nearest first, too-hard and skipped last", function()
+    local steps = JD.AutoSteps({
+        { id = 1, title = "Far", level = 5, distSq = 900 },
+        { id = 2, title = "Near", level = 5, distSq = 100 },
+        { id = 3, title = "Done far", level = 5, complete = true, distSq = 5000 },
+        { id = 4, title = "Too hard", level = 20, distSq = 10 },
+        { id = 5, title = "Skipped", level = 5, distSq = 1, skipped = true },
+        { id = 6, title = "No position", level = 4 },
+    }, 6)
+    local order = {}
+    for i, s in ipairs(steps) do order[i] = s.questID end
+    eq(table.concat(order, ","), "3,2,1,6,5,4")
+    eq(steps[1].type, "turnin"); eq(steps[2].type, "complete")
+end)
+
+test("arrow math: bearing and distance", function()
+    local rot, dist = JD.Bearing(0, 0, 10, 0, 0) -- target north, facing north
+    eq(math.floor(rot * 1000 + 0.5), 0); eq(dist, 10)
+    rot = JD.Bearing(0, 0, 0, 10, 0) -- target west, facing north -> arrow points left
+    eq(math.floor(rot * 1000 + 0.5), math.floor(math.pi / 2 * 1000 + 0.5))
+    rot = JD.Bearing(0, 0, 0, 10, math.pi / 2) -- facing west, target west -> straight ahead
+    eq(math.floor(rot * 1000 + 0.5) % math.floor(2 * math.pi * 1000 + 0.5), 0)
+    eq(JD.FormatDistance(123.4), "123 yd"); eq(JD.FormatDistance(2500), "2.5k yd")
+end)
+
+test("session rates", function()
+    local xph, ttl, gph = JD.SessionRates(1800, 5000, 10000, 20000)
+    eq(xph, 10000); eq(ttl, 3600); eq(gph, 40000)
+    local a, b = JD.SessionRates(30, 100, 100, 0)
+    eq(a, 0); eq(b, nil)
+    eq(JD.FormatDuration(3725), "1h 2m"); eq(JD.FormatDuration(125), "2m"); eq(JD.FormatDuration(nil), "–")
+    eq(JD.Short(12345), "12.3k"); eq(JD.Short(999), "999"); eq(JD.XPPercent(50, 200), 25)
+end)
+
 ---------------------------------------------------------------------------
 -- Part 2: smoke test with a mocked WoW API
 ---------------------------------------------------------------------------
@@ -146,6 +251,7 @@ local mockMT
 local function mock() return setmetatable({}, mockMT) end
 mockMT = {
     __index = function(t, k)
+        if type(k) ~= "string" or k:match("^%l") then return nil end -- like real frames: only Methods exist
         local f = function()
             local r = { returnsFor(k) }
             if #r > 0 then return unpack(r) end
@@ -188,7 +294,8 @@ env.CreateFont = function() return mock() end
 env.hooksecurefunc = function() end
 env.issecretvalue = function() return false end
 env.geterrorhandler = function() return function(err) error(err, 0) end end
-env.InCombatLockdown = function() return false end
+local inCombat = false
+env.InCombatLockdown = function() return inCombat end
 env.UnitName = function() return "Tester", "Forever" end
 env.UnitClass = function() return "Warrior", "WARRIOR", 1 end
 env.UnitLevel = function() return 20 end
@@ -234,6 +341,52 @@ env.Settings = setmetatable({ VarType = { Boolean = "boolean", Number = "number"
 env.CreateSettingsButtonInitializer = function() return mock() end
 env.CreateSettingsListSectionHeaderInitializer = function() return mock() end
 
+-- Journey: a fake quest log with two quests (one finished) and a fake position/facing
+local function vec(x, y) return { x = x, y = y, GetXY = function(v) return v.x, v.y end } end
+local questLog = {
+    { questID = 101, title = "Wolves", level = 3, complete = false, distSq = 400 },
+    { questID = 102, title = "Letter", level = 2, complete = true, distSq = 2500 },
+}
+local calls = {}
+local function record(name) return function(...) calls[name] = (calls[name] or 0) + 1 end end
+env.C_QuestLog = {
+    GetNumQuestLogEntries = function() return #questLog end,
+    GetInfo = function(i) local q = questLog[i]; return q and { questID = q.questID, title = q.title, level = q.level } end,
+    IsComplete = function(id) for _, q in ipairs(questLog) do if q.questID == id then return q.complete end end return false end,
+    ReadyForTurnIn = function() return false end,
+    GetQuestObjectives = function() return { { text = "0/5 Wolves slain", finished = false } } end,
+    GetDistanceSqToQuest = function(id) for _, q in ipairs(questLog) do if q.questID == id then return q.distSq, true end end end,
+    IsOnQuest = function(id) for _, q in ipairs(questLog) do if q.questID == id then return true end end return false end,
+    IsQuestFlaggedCompleted = function() return false end,
+    GetNextWaypoint = function() return nil end,
+    GetQuestsOnMap = function() return { { questID = 102, x = 0.5, y = 0.5 } } end,
+    GetTitleForQuestID = function(id) return "Quest " .. id end,
+}
+env.C_SuperTrack = { SetSuperTrackedQuestID = record("supertrack"), SetSuperTrackedUserWaypoint = record("supertrackwp") }
+env.C_Map = {
+    GetBestMapForUnit = function() return 1429 end,
+    GetPlayerMapPosition = function() return vec(0.4, 0.4) end,
+    GetWorldPosFromMapPos = function(_, v) return 0, vec(v.y * 1000, v.x * 1000) end,
+    CanSetUserWaypointOnMap = function() return true end,
+    SetUserWaypoint = record("userwp"), ClearUserWaypoint = record("clearwp"),
+}
+env.CreateVector2D = vec
+env.UiMapPoint = { CreateFromCoordinates = function(m, x, y) return { m = m, x = x, y = y } end }
+env.GetPlayerFacing = function() return 0 end
+env.GetTime = function() return 1000 end
+env.UnitXP = function() return 300 end
+env.UnitXPMax = function() return 1000 end
+env.IsShiftKeyDown = function() return false end
+env.QuestGetAutoAccept = function() return false end
+env.AcceptQuest = record("accept")
+env.AcknowledgeAutoAcceptQuest = record("ack")
+env.GetQuestMoneyToGet = function() return 0 end
+env.IsQuestCompletable = function() return true end
+env.CompleteQuest = record("complete")
+env.GetNumQuestChoices = function() return 0 end
+env.GetQuestReward = record("reward")
+env.C_GossipInfo = { GetActiveQuests = function() return {} end, GetAvailableQuests = function() return {} end }
+
 local function loadTOC()
     local addonNS = {}
     local toc = assert(io.open(ADDON .. "HawarysAddon.toc")):read("*a")
@@ -268,7 +421,7 @@ test("smoke: ADDON_LOADED + login + entering world", function()
 end)
 
 test("smoke: open every page", function()
-    for _, page in ipairs({ "home", "general", "gear", "bags", "qol", "journey", "macrohelp", "nonsense" }) do
+    for _, page in ipairs({ "home", "general", "journey", "gear", "bags", "qol", "talents", "macrohelp", "nonsense" }) do
         A:OpenWindow(page)
     end
 end)
@@ -292,12 +445,61 @@ test("smoke: toggle modules, change settings, slash commands, toasts, events", f
     fire("PLAYER_REGEN_ENABLED")
 end)
 
+test("smoke: journey auto mode, guide import, next/back, automation guarded", function()
+    local Jm = A.modules.journey
+    truthy(Jm:IsEnabled(), "journey enabled")
+    Jm:Refresh()
+    eq(Jm.view.mode, "auto")
+    eq(Jm.current.questID, 102, "finished quest comes first")
+    eq(Jm.current.type, "turnin")
+    truthy(calls.supertrack and calls.supertrack >= 1, "Blizzard supertrack used")
+    local dist = Jm:DistanceTo(Jm.target)
+    truthy(dist and dist > 0, "distance computed")
+    Jm:Next() -- skip in auto mode
+    eq(Jm.current.questID, 101)
+    Jm:Back() -- un-skip
+    eq(Jm.current.questID, 102)
+
+    local name, errors, n = Jm:ImportGuide(SAMPLE_GUIDE)
+    eq(name, "Test Valley 1-5"); eq(n, 8); eq(#errors, 0)
+    Jm:Set("guide", name)
+    eq(Jm.view.mode, "guide")
+    eq(Jm.view.index, 1, "quest 100 isn't in the log, so the guide starts at step 1")
+    eq(Jm.current.type, "accept")
+    truthy(calls.userwp and calls.userwp >= 1, "coordinate step sets Blizzard's own map pin")
+    Jm:Next()
+    eq(Jm.view.index, 2)
+    Jm:Back()
+    eq(Jm.view.index, 1)
+    Jm:Set("guide", "auto")
+    eq(Jm.view.mode, "auto")
+
+    -- automation is off by default
+    fire("QUEST_DETAIL"); fire("QUEST_PROGRESS"); fire("QUEST_COMPLETE")
+    eq(calls.accept, nil); eq(calls.complete, nil); eq(calls.reward, nil)
+    Jm:Set("autoAccept", true); Jm:Set("autoTurnIn", true)
+    fire("QUEST_DETAIL"); fire("QUEST_PROGRESS"); fire("QUEST_COMPLETE")
+    eq(calls.accept, 1); eq(calls.complete, 1); eq(calls.reward, 1)
+    env.IsShiftKeyDown = function() return true end -- Shift pauses it
+    fire("QUEST_DETAIL")
+    eq(calls.accept, 1)
+    env.IsShiftKeyDown = function() return false end
+    env.GetNumQuestChoices = function() return 3 end -- several rewards: the player chooses
+    fire("QUEST_COMPLETE")
+    eq(calls.reward, 1)
+    inCombat = true -- never in combat
+    fire("QUEST_DETAIL")
+    eq(calls.accept, 1)
+    inCombat = false
+    for _, cmd in ipairs({ "guide", "guide", "journey" }) do env.SlashCmdList.HAWARYSADDON(cmd) end
+end)
+
 test("smoke: native theme builds too", function()
     env.HawarysAddonDB.general.theme = "native"
     local B = loadTOC()
     fire("ADDON_LOADED", "HawarysAddon")
     fire("PLAYER_LOGIN")
-    for _, page in ipairs({ "home", "general", "gear", "bags", "qol" }) do B:OpenWindow(page) end
+    for _, page in ipairs({ "home", "general", "journey", "gear", "bags", "qol" }) do B:OpenWindow(page) end
 end)
 
 print(string.format("\n%d passed, %d failed", passed, failed))

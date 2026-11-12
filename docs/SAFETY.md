@@ -41,6 +41,11 @@ These are the same things Leatrix Plus, Questie and Baganator have done for year
 - Max camera distance (a normal client setting, restored when turned off)
 - Coordinates (hidden where the game doesn't share your position), drag Blizzard windows (only frames that aren't protected, never in combat)
 - Tooltip lines, bag arrows, quest reward marking (read-only display). Pre-selecting a reward is optional and off by default, and **you still click Complete yourself**.
+- Journey guide window, arrow and Blizzard map pin: display only. It uses Blizzard's own super-tracking and user waypoint, which the map UI itself offers.
+- **Quest auto accept / turn-in** (Journey): the same feature Questie, Polestar Guides and Leatrix Plus ship. It's **off by default**, works only after **you** talk to the NPC, is paused while **Shift** is held, never runs in combat, never picks between several rewards and never pays gold for you.
+
+## Never-build list (lessons from other addons' changelogs, see RESEARCH.md)
+Layer detection (Blizzard obfuscated GUIDs to stop it), reading minimap herb or ore dots (blocked in Forever), raid marks, chat or emote sends or crafting from code without a click, auto-confirming enchant-replace popups, telemetry that's on by default, paid or premium features.
 
 ## Checklist for every new feature
 

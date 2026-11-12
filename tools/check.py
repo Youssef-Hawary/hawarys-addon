@@ -48,6 +48,12 @@ REVIEWED = {
     "CreateFrame", "CreateFont", "StaticPopup_Show", "StaticPopup_Hide", "HideUIPanel",
     "QuestInfo_ShowRewards", "QuestInfoItem_OnClick", "CreateSettingsButtonInitializer",
     "CreateSettingsListSectionHeaderInitializer", "GetCursorPosition",
+    # quest dialog functions called by Blizzard's own Forever QuestFrame.lua (Mainline, build 70888)
+    "AcceptQuest", "AcknowledgeAutoAcceptQuest", "CompleteQuest", "GetActiveTitle", "GetAvailableQuestInfo",
+    "GetNumActiveQuests", "GetNumAvailableQuests", "GetQuestMoneyToGet", "GetQuestReward", "IsQuestCompletable",
+    "QuestGetAutoAccept", "SelectActiveQuest", "SelectAvailableQuest",
+    # FrameXML table (UiMapPoint.CreateFromCoordinates in framexml/mixins.md)
+    "UiMapPoint",
 }
 
 

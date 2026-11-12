@@ -16,7 +16,9 @@ Status: ✅ done (static checks + mocked tests pass; **in-game check not run yet
 | R8 | Item counts across characters + total gold | ✅ | Modules/Bags.lua | Log in on 2 characters; tooltip lists both |
 | R9 | QoL: repair, junk, loot, invites, duels, camera, coords, move windows | ✅ | Modules/QoL.lua | Each toggle does its job and does nothing when off |
 | R10 | Home dashboard (character, gold, ilvl, upgrades, modules, roadmap) | ✅ | Core/UI.lua | `/ha` opens Home with live numbers |
-| R11 | Journey & Guide (Zygor/RestedXP/Questie/NAG style) | 🔜 Phase 2 | | |
+| R11 | Journey & Guide (Zygor/RestedXP/Questie/NAG style) | ✅ 0.2.0 | Modules/Journey*.lua | Guide window shows current + next steps. Arrow points the right way. Map pin set. Auto Journey orders turn-ins first. Imported guide steps tick off by themselves |
+| R11b | Ready-made Forever routes (1–20, then to 60) | 🔜 | | Needs verified quest IDs and coordinates, never invented |
+| R18 | Overwolf-style features inside the game | 🟡 session stats done | Journey | Adventure planner → Dungeons; own map layer → Discovery |
 | R12 | Talents & Training | 🔜 Phase 2 | | |
 | R13 | Professions, Market, Alts | 🔜 Phase 3 | | |
 | R14 | Dungeons, Discovery, "What now?", Journey Diary | 🔜 Phase 4 | | |

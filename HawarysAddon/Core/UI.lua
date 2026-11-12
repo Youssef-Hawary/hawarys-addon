@@ -59,7 +59,6 @@ StaticPopupDialogs.HAWARYS_ADDON_RELOAD = {
 
 -- Roadmap entries shown in the sidebar until their modules ship
 ns.roadmap = {
-    { id = "journey", title = L.MOD_JOURNEY, desc = L.MOD_JOURNEY_DESC },
     { id = "talents", title = L.MOD_TALENTS, desc = L.MOD_TALENTS_DESC },
     { id = "professions", title = L.MOD_PROFESSIONS, desc = L.MOD_PROFESSIONS_DESC },
     { id = "market", title = L.MOD_MARKET, desc = L.MOD_MARKET_DESC },

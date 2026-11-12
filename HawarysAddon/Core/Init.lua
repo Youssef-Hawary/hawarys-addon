@@ -80,7 +80,7 @@ ns.defaults = {
     },
     modules = {},
     chars = {},
-    sequences = {},
+    guides = {},
 }
 ns.charDefaults = {
     modules = {},
@@ -142,7 +142,17 @@ function Module:RegisterEvent(event, handler)
         self.eventFrame:SetScript("OnEvent", function(_, e, ...)
             local h = mod.handlers[e]
             if type(h) == "string" then h = mod[h] end
-            if h then ns.Safe(h, mod, e, ...) end
+            if h and not ns.Safe(h, mod, e, ...) then
+                -- Lesson from other Forever addons: a module that keeps failing pauses itself
+                -- for this session instead of flooding the player with errors.
+                mod.errors = (mod.errors or 0) + 1
+                if mod.errors >= 5 and mod.enabled then
+                    mod.enabled = false
+                    mod:UnregisterAllEvents()
+                    if mod.OnDisable then ns.Safe(mod.OnDisable, mod) end
+                    ns:Print(L.MODULE_ERRORS, mod.title or mod.id)
+                end
+            end
         end)
     end
     self.handlers[event] = handler or event
@@ -247,13 +257,16 @@ SlashCmdList.HAWARYSADDON = function(msg)
     elseif cmd == "help" then
         ns:Print("/ha – open the window")
         ns:Print("/ha options – Blizzard options menu")
-        ns:Print("/ha home | gear | bags | macros | qol | general – open a page")
+        ns:Print("/ha home | journey | gear | bags | qol | general – open a page")
+        ns:Print("/ha guide – show or hide the guide window")
         ns:Print("/ha stats – print the raw stats of the item under your mouse")
         ns:Print("/ha version")
     elseif cmd == "version" then
         ns:Print("%s %s", L.ADDON_TITLE, ns.version)
     elseif cmd == "stats" then
         ns:Fire("DEBUG_STATS")
+    elseif cmd == "guide" then
+        ns:Fire("JOURNEY_TOGGLE")
     else
         ns:OpenWindow(cmd)
     end

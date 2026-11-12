@@ -5,13 +5,14 @@
 **One addon for World of Warcraft: Forever** that brings together what the most popular addons do, with one clean Hawary look and one settings window.
 
 - **Game:** World of Warcraft: Forever, client 1.60.1, `## Interface: 16001`
-- **Version:** 0.1.0 (Phase 1)
+- **Version:** 0.2.0 (Phase 2: Journey & Guide)
 - **License:** GPL-3.0-or-later. Free forever, code fully visible, as Blizzard's add-on policy requires.
 
-## What's in it (Phase 1)
+## What's in it
 
 | Module | Like | What it does |
 |---|---|---|
+| **Journey & Guide** | Zygor, RestedXP, Questie, NAG Journey, Overwolf stats | A floating **step-by-step guide window** with the current step, its objectives and the next steps. A big **direction arrow** with distance. **Blizzard's own map pin and in-world marker** for the current step. **Auto Journey** builds your route from your own quest log (finished quests first, then the nearest objectives). **Import step guides** ([format](docs/GUIDE-FORMAT.md)). **Session stats** (XP/hour, time to level). Level-up notice. Optional quest automation: off by default, Shift pauses it, never in combat. |
 | **Gear & Upgrades** | Pawn, GearQuest, NAG Journey | Stat weights for your class and spec. Tooltip shows `+12% upgrade` or `-5% vs equipped`, plus the exact item level and item ID. Green arrows on upgrades in your bags. **Marks the best quest reward** (your biggest upgrade, or what sells for the most) and can pre-select it. You still click Complete. Notices when you loot an upgrade. |
 | **Bags** | Baganator, Altoholic | Remembers every character's bags, bank and gear. Item tooltips show who has how many (bags / bank / worn). Total gold across characters on the Home page. |
 | **Quality of Life** | Leatrix Plus, Leatrix Maps, BlizzMove | Auto repair (guild funds optional), sell junk, instant loot, accept invites from friends & guild, decline duels, max camera distance, coordinates on the minimap and world map, drag Blizzard windows. |
@@ -26,7 +27,9 @@ Everything is also in Blizzard's own **Options → AddOns → Hawary's Addon** m
 
 ## Coming next
 
-Journey & Guide (step-by-step leveling guide with arrow and quest markers) · Talents & Training · Professions · Market · Dungeons · Discovery (rares, books) · Alts & Gold · "What now?" button · Macro Helper (normal Blizzard macros only).
+Talents & Training · Professions · Market · Dungeons (with an Overwolf-style adventure planner) · Discovery (your own map layer: rares, herbs and ore you found, books) · Alts & Gold · "What now?" button · Macro Helper (normal Blizzard macros only).
+
+What we learned from the changelogs of Leatrix, Questie, ClassicUI Forever, NaowhForever, SkillUp, BlizzMove and the Overwolf apps is in [docs/RESEARCH.md](docs/RESEARCH.md).
 
 ## Safe to use: no bannable features
 
@@ -47,8 +50,9 @@ Hawary's Addon follows [Blizzard's UI Add-On Development Policy](https://us.foru
 | Command | What it does |
 |---|---|
 | `/ha` | open or close the window (also `/hawary`) |
+| `/ha guide` | show or hide the guide window |
 | `/ha options` | Blizzard's options menu for the addon |
-| `/ha gear` · `/ha bags` · `/ha qol` · `/ha general` | open a page |
+| `/ha journey` · `/ha gear` · `/ha bags` · `/ha qol` · `/ha general` | open a page |
 | `/ha stats` | print the raw stats of the item under your mouse (helps tune stat weights) |
 | `/ha version` | show the version |
 
@@ -61,7 +65,7 @@ HawarysAddon/          the addon folder that goes into Interface\AddOns
   HawarysAddon.toc     load order, Interface 16001
   Locales/enUS.lua     every visible string (English base, others fall back to it)
   Core/                Util (pure helpers), Init (modules/events/saved vars), Theme (themes + widgets), UI (window, menus, minimap, toasts)
-  Modules/             GearData (pure scoring), Gear, Bags, QoL
+  Modules/             JourneyData (pure guide/route logic), Journey, JourneyUI, GearData (pure scoring), Gear, Bags, QoL
   Media/               logo, mark, UI shape textures, Chakra Petch font (OFL)
 brand/                 logo + banner (source in tools/make_brand.py)
 docs/                  API notes, safety rules, requirements

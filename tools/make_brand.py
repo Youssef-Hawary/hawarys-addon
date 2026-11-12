@@ -133,6 +133,44 @@ def ui_shapes() -> dict:
         d.line([(12 * s, 8 * s), (20 * s, 16 * s), (12 * s, 24 * s)], fill=(255, 255, 255, 255),
                width=int(2.6 * s), joint="curve")
     shapes["chevron"] = aa_shape((32, 32), chev)
+    # Journey step icons (white; tinted in game)
+    font_path = os.path.join(FONT_SRC, "chakra-petch-bold.woff")
+    def glyph(ch):
+        def draw(d, s):
+            ttf = os.path.join(MEDIA, "ChakraPetch-Bold.ttf")
+            f = ImageFont.truetype(ttf if os.path.exists(ttf) else font_path, 30 * s)
+            box = d.textbbox((0, 0), ch, font=f)
+            w, h = box[2] - box[0], box[3] - box[1]
+            d.text(((32 * s - w) / 2 - box[0], (32 * s - h) / 2 - box[1]), ch, font=f, fill=(255, 255, 255, 255))
+        return draw
+    shapes["quest_new"] = aa_shape((32, 32), glyph("!"))
+    shapes["quest_done"] = aa_shape((32, 32), glyph("?"))
+    def pin(d, s):
+        d.ellipse([8 * s, 3 * s, 24 * s, 19 * s], fill=(255, 255, 255, 255))
+        d.polygon([(9.5 * s, 14 * s), (22.5 * s, 14 * s), (16 * s, 29 * s)], fill=(255, 255, 255, 255))
+        d.ellipse([12.5 * s, 7.5 * s, 19.5 * s, 14.5 * s], fill=(255, 255, 255, 0))
+    shapes["pin"] = aa_shape((32, 32), pin)
+    def star(d, s):
+        import math
+        pts = []
+        for i in range(10):
+            r = (13 if i % 2 == 0 else 5.5) * s
+            a = math.pi / 2 + i * math.pi / 5
+            pts.append((16 * s + r * math.cos(a), 17 * s - r * math.sin(a)))
+        d.polygon(pts, fill=(255, 255, 255, 255))
+    shapes["star"] = aa_shape((32, 32), star)
+    def book(d, s):
+        d.rounded_rectangle([5 * s, 6 * s, 15.2 * s, 26 * s], radius=2 * s, fill=(255, 255, 255, 255))
+        d.rounded_rectangle([16.8 * s, 6 * s, 27 * s, 26 * s], radius=2 * s, fill=(255, 255, 255, 255))
+    shapes["book"] = aa_shape((32, 32), book)
+    def dot(d, s):
+        d.ellipse([10 * s, 10 * s, 22 * s, 22 * s], fill=(255, 255, 255, 255))
+    shapes["dot"] = aa_shape((32, 32), dot)
+    # big navigation arrow (points up), with a notch like a modern nav chevron
+    def nav(d, s):
+        pts = [(32, 4), (58, 58), (32, 44), (6, 58)]
+        d.polygon([(px * s, py * s) for px, py in pts], fill=(255, 255, 255, 255))
+    shapes["nav"] = aa_shape((64, 64), nav)
     # soft drop shadow, 9-slice with margins 24
     sh = Image.new("RGBA", (96, 96), (0, 0, 0, 0))
     ImageDraw.Draw(sh).rounded_rectangle([20, 20, 75, 75], radius=14, fill=(0, 0, 0, 255))
