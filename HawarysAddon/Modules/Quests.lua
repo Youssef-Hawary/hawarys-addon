@@ -105,6 +105,13 @@ function Quests:AllQuestIDs()
     return ids
 end
 
+function Quests:AllItemIDs()
+    if lib then return (lib.Item and lib.Item.GetAllIds) and lib.Item.GetAllIds() or {} end
+    local ids = {}
+    for id in pairs(Table("item") or {}) do ids[#ids + 1] = id end
+    return ids
+end
+
 function Quests:MapOf(areaID)
     if not areaMap then return nil end
     local o = areaOverride[areaID]

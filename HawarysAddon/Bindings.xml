@@ -1,0 +1,11 @@
+<Bindings>
+    <Binding name="HAWARYSADDON_TOGGLE" header="HAWARYSADDON" category="ADDONS">
+        HawarysAddon_Toggle()
+    </Binding>
+    <Binding name="HAWARYSADDON_GUIDE" category="ADDONS">
+        HawarysAddon_ToggleGuide()
+    </Binding>
+    <Binding name="HAWARYSADDON_TRACKER" category="ADDONS">
+        HawarysAddon_ToggleTracker()
+    </Binding>
+</Bindings>

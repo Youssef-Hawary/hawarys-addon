@@ -51,8 +51,26 @@ These are the same things Leatrix Plus, Questie and Baganator have done for year
 
 - Quests, routes, Trainer Planner and Macro Helper are display/advice only. Macros are normal Blizzard macros created by your click; the trainer is never bought from automatically.
 
+- **1.2.0 additions:**
+  - Quest Tracker+, nameplate quest icons, party-on-quest, BiS finder, bag categories, flight-path finder and Auction Watch are **display only**.
+    - Nameplate icons read only who an NPC is, and skip units the game hides (secret values, e.g. in instances).
+    - Auction Watch **never cancels or reposts**. It only asks for your own auction list (the same request Blizzard's Auctions tab makes).
+  - **Equipment sets:** one set per click (Blizzard's own equipment manager), never in combat.
+  - **Junk list:** each click on "Sell junk" sells **one** stack at an open merchant (the same as right-clicking it yourself), never in combat, never automatic.
+  - **Minimap Button Bag** only moves other *addons'* buttons. **Profiles** only change Hawary settings. **Controller support** only marks Hawary's own buttons for Blizzard's gamepad navigation and adds normal key bindings.
+- **For Fun** (Skins, Fashion Studio, Fun Stats & Badges, Hex Hop, Fun Moments):
+  - **Skins** recolor Hawary's own windows only.
+  - **Fashion Studio** dresses a *preview model* (like Blizzard's dressing room). Your real gear and the game files never change.
+  - The jump counter is a post-hook: it counts after the game handled the key and can't change or block anything.
+  - The AFK show is our own screen: it doesn't spin the camera and hides in combat.
+  - Death roasts and fortunes print only to **your** chat frame. Nothing is ever sent to other players.
+
+## "Skin changers" for other games
+
+Asked on 2026-11-12: a Valorant / League of Legends style **skin changer** will **never** be built. Those tools edit game files or memory behind the game's anti-cheat (Riot Vanguard) and get accounts banned. They're also impossible from inside a WoW addon. The safe alternatives are Hawary's own Skins and the Fashion Studio preview.
+
 ## Never-build list (lessons from other addons' changelogs, see RESEARCH.md)
-Layer detection (Blizzard obfuscated GUIDs to stop it), reading minimap herb or ore dots (blocked in Forever), raid marks, chat or emote sends or crafting from code without a click, auto-confirming enchant-replace popups, telemetry that's on by default, paid or premium features.
+Layer detection (Blizzard obfuscated GUIDs to stop it), skin changers or model swaps that modify game files, reading minimap herb or ore dots (blocked in Forever), raid marks, chat or emote sends or crafting from code without a click, auto-confirming enchant-replace popups, telemetry that's on by default, paid or premium features.
 
 ## Checklist for every new feature
 

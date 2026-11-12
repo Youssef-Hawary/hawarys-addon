@@ -323,6 +323,14 @@ function Journey:Refresh()
     self.view = view
     self.current = view.steps[1]
     self.target = self:TargetFor(self.current)
+    -- A quest clicked in the Hawary tracker takes over the arrow until it's done
+    if self.focusQuest then
+        if C_QuestLog.IsOnQuest(self.focusQuest) then
+            self.target = self:TargetFor({ questID = self.focusQuest }) or self.target
+        else
+            self.focusQuest = nil
+        end
+    end
     self:UpdateWaypoint()
     ns:Fire("JOURNEY_UPDATED", view)
 end

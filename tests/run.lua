@@ -642,6 +642,43 @@ env.C_TradeSkillUI = {
         reagentSlotSchematics = { { required = true, quantityRequired = 1, reagents = { { itemID = 2770 } } } } } end,
 }
 
+-- 1.2.0 mocks: tracker, nameplates, sets, flight paths, owned auctions, fun stats
+env.C_QuestLog.GetNumQuestWatches = function() return 0 end
+env.C_QuestLog.GetQuestIDForQuestWatchIndex = function() return nil end
+env.C_QuestLog.IsUnitOnQuest = function(unit) return unit == "party1" end
+env.C_NamePlate = { GetNamePlateForUnit = function() return newFrame() end }
+env.UnitGUID = function() return "Creature-0-1-2-3-4001-0000ABCD" end
+env.C_EquipmentSet = {
+    GetEquipmentSetIDs = function() return { 1 } end,
+    GetEquipmentSetInfo = function() return "Tank", 123, 1, true, 10, 10, 0, 0, 0 end,
+    UseEquipmentSet = record("useset"), CreateEquipmentSet = record("createset"), SaveEquipmentSet = record("saveset"),
+}
+env.C_TaxiMap = { GetTaxiNodesForMap = function() return {
+    { name = "Crossroads", position = vec(0.45, 0.4), faction = 0, isUndiscovered = false },
+    { name = "Far Camp", position = vec(0.9, 0.9), faction = 2, isUndiscovered = true },
+    { name = "Enemy Roost", position = vec(0.41, 0.41), faction = 1, isUndiscovered = true },
+} end }
+env.C_Map.GetMapWorldSize = function() return 10000, 8000 end
+env.Enum.UIMapType = { Continent = 2, Zone = 3 }
+env.Enum.FlightPathFaction = { Neutral = 0, Horde = 1, Alliance = 2 }
+env.Enum.ItemClass = { Consumable = 0, Container = 1, Weapon = 2, Gem = 3, Armor = 4, Reagent = 5, Projectile = 6,
+    Tradegoods = 7, ItemEnhancement = 8, Recipe = 9, Quiver = 11, Questitem = 12 }
+env.Enum.AuctionStatus = { Active = 0, Sold = 1 }
+env.Enum.AuctionHouseSortOrder = { Price = 0, Name = 1 }
+env.IsInInstance = function() return false end
+env.UnitOnTaxi = function() return false end
+env.UnitIsAFK = function() return true end
+env.GetCursorInfo = function() return "item", 2589 end
+env.ClearCursor = record("clearcursor")
+env.JumpOrAscendStart = function() end
+env.C_AuctionHouse.QueryOwnedAuctions = function() end
+env.C_AuctionHouse.GetNumOwnedAuctions = function() return 0 end
+env.strsplit = function(sep, str)
+    local out = {}
+    for part in (str .. sep):gmatch("(.-)" .. sep:gsub("%p", "%%%0")) do out[#out + 1] = part end
+    return unpack(out)
+end
+
 local function loadTOC()
     local addonNS = {}
     local toc = assert(io.open(ADDON .. "HawarysAddon.toc")):read("*a")
@@ -917,12 +954,155 @@ test("extras: settings code round-trip, sort, session, level summary", function(
     A:OpenWindow("extras")
 end)
 
+test("1.2.0 pure logic: tracker, BiS, bags, auctions, flights, button bag, fun", function()
+    local Tr = A.modules.tracker
+    eq(Tr.Yards(100 * 100), 100); eq(Tr.Yards(nil), nil); eq(Tr.Yards(0), nil)
+    eq(Tr.FormatYards(250), "250 yd"); eq(Tr.FormatYards(1500), "1.5k yd"); eq(Tr.FormatYards(nil), "")
+    eq(Tr.NpcIDFromGUID("Creature-0-1-2-3-4001-0000ABCD"), 4001)
+    eq(Tr.NpcIDFromGUID("Player-1-0ABC"), nil); eq(Tr.NpcIDFromGUID(nil), nil)
+
+    local GP = A.modules.gearplus
+    local best = GP.Pick({
+        { group = "HEAD", pct = 5, minLevel = 18 }, { group = "HEAD", pct = 12, minLevel = 20 },
+        { group = "HEAD", pct = 30, minLevel = 24 }, { group = "FEET", pct = 9, minLevel = 40 },
+        { group = "NECK", pct = 0, minLevel = 1 },
+    }, 20)
+    eq(best.now.HEAD.pct, 12, "best usable now"); eq(best.soon.HEAD.pct, 30, "best in the next 5 levels")
+    eq(best.soon.FEET, nil, "level 40 is too far"); eq(best.now.NECK, nil, "no gain, no entry")
+
+    local BP = A.modules.bagsplus
+    local IC = env.Enum.ItemClass
+    eq(BP.Categorize(IC.Armor, 2, 1), "GEAR"); eq(BP.Categorize(IC.Armor, 0, 1), "POOR")
+    eq(BP.Categorize(IC.Questitem, 1, 1), "QUEST"); eq(BP.Categorize(IC.Tradegoods, 1, 1), "TRADE")
+    eq(BP.Categorize(99, 1, 1), "OTHER")
+    env.HawarysAddonDB.junk[777] = true
+    eq(BP.Categorize(IC.Armor, 2, 777), "JUNKLIST", "your junk list wins")
+    env.HawarysAddonDB.junk[777] = nil
+
+    local AW = A.modules.auctions
+    local under = AW.Undercuts({ { itemID = 1, unit = 100 }, { itemID = 2, unit = 50 }, { itemID = 3, unit = 10 } },
+        function(id) return ({ [1] = 90, [2] = 50 })[id], 0 end)
+    eq(#under, 1, "only cheaper ones count"); eq(under[1].itemID, 1); eq(under[1].lowest, 90)
+
+    local TR = A.modules.travel
+    local ranked = TR.Rank({ { name = "A", x = 0.5, y = 0.5 }, { name = "B", x = 0.41, y = 0.4 } }, 0.4, 0.4, 1000, 1000)
+    eq(ranked[1].name, "B"); eq(ranked[1].yards, 10)
+
+    local BB = A.modules.buttonbag
+    eq(BB.Wants("LibDBIcon10_Questie"), true); eq(BB.Wants("SomeAddonMinimapButton"), true)
+    eq(BB.Wants("HawarysAddonMinimapButton"), false); eq(BB.Wants("MiniMapTracking"), false)
+    eq(BB.Wants("GameTimeFrame"), false); eq(BB.Wants(nil), false)
+
+    local F = A.Fun
+    local new = F.NewBadges({ jumps = 150, deaths = 0, skins = { a = true, b = true, c = true, d = true, e = true } }, { jump100 = 1 })
+    local set = {}
+    for _, id in ipairs(new) do set[id] = true end
+    truthy(set.skins5 and not set.jump100 and not set.death1, "only newly reached badges")
+    local p1, p2 = F.DailyPick(20404, 3), F.DailyPick(20404, 3)
+    eq(#p1, 3); eq(p1[1], p2[1]); eq(p1[3], p2[3])
+    truthy(p1[1] ~= p1[2] and p1[2] ~= p1[3] and p1[1] ~= p1[3], "3 different challenges")
+    local outfit = F.RandomOutfit({ { id = 1, equipLoc = "INVTYPE_HEAD" }, { id = 2, equipLoc = "INVTYPE_HEAD" },
+        { id = 3, equipLoc = "INVTYPE_FEET" }, { id = 4, equipLoc = "INVTYPE_FINGER" } }, function(a) return a end)
+    eq(#outfit, 2, "one per visible slot, rings aren't shown"); eq(outfit[1], 1)
+    eq(F.HexPoints(false, 0), 1); eq(F.HexPoints(true, 0), 3); eq(F.HexPoints(false, 10), 3)
+    truthy(F.FortuneFor(20404) ~= nil, "a fortune every day")
+end)
+
+test("1.2.0 smoke: every new page, tracker, sets, junk seller, flights, profiles, fun moments", function()
+    for _, page in ipairs({ "tracker", "gearplus", "bagsplus", "auctions", "travel", "buttonbag", "profiles",
+                            "skins", "fashion", "funstats", "hexhop", "moments" }) do
+        truthy(A.modules[page], "module " .. page)
+        A:OpenWindow(page)
+    end
+    -- tracker + party + click-to-arrow
+    local Tr = A.modules.tracker
+    env.UnitExists = function(u) return u == "party1" end
+    local rows = Tr:List()
+    truthy(#rows >= 1, "tracker lists quests")
+    eq(rows[1].party[1], "Tester", "party member on the same quest")
+    Tr:Focus(rows[1].id)
+    eq(A.modules.journey.focusQuest, rows[1].id, "arrow follows the clicked quest")
+    env.UnitExists = function() return false end
+    env.SlashCmdList.HAWARYSADDON("tracker")
+    fire("NAME_PLATE_UNIT_ADDED", "nameplate1")
+    fire("NAME_PLATE_UNIT_REMOVED", "nameplate1")
+    -- equipment sets: one click = one Blizzard call, never in combat
+    local GP = A.modules.gearplus
+    eq(GP:Sets()[1].name, "Tank")
+    GP:UseSet(1); eq(calls.useset, 1)
+    inCombat = true; GP:UseSet(1); eq(calls.useset, 1); inCombat = false
+    GP:SaveSet("Fishing"); eq(calls.createset, 1)
+    GP:Scan()
+    -- junk: one stack per click, only at a merchant
+    local BP = A.modules.bagsplus
+    local used = 0
+    env.C_Container.UseContainerItem = function() used = used + 1 end
+    env.C_Container.GetContainerNumSlots = function(bag) return bag == 0 and 2 or 0 end
+    env.C_Container.GetContainerItemInfo = function(_, slot) return { itemID = 2589, stackCount = 5, quality = 1, iconFileID = 1 } end
+    BP:AddJunk(2589)
+    fire("MERCHANT_CLOSED") -- an earlier smoke test opened a merchant
+    BP:SellOne(); eq(used, 0, "not without a merchant")
+    fire("MERCHANT_SHOW")
+    BP:SellOne(); eq(used, 1, "one stack per click")
+    inCombat = true; BP:SellOne(); eq(used, 1, "never in combat"); inCombat = false
+    fire("MERCHANT_CLOSED")
+    A:OpenWindow("bagsplus")
+    BP:RemoveJunk(2589)
+    env.C_Container.GetContainerNumSlots = function() return 0 end
+    -- flights: own faction + neutral only, nearest known first
+    env.C_Map.GetMapInfo = function(id) return { name = "Kalimdor", mapType = 2 } end
+    local list = A.modules.travel:Nodes()
+    eq(#list, 2, "enemy flight masters left out")
+    eq(list[1].name, "Crossroads")
+    env.SlashCmdList.HAWARYSADDON("fly")
+    -- auction watch
+    env.C_AuctionHouse.GetNumOwnedAuctions = function() return 1 end
+    env.C_AuctionHouse.GetOwnedAuctionInfo = function() return { status = 0, itemKey = { itemID = 2589 }, buyoutAmount = 999, quantity = 1 } end
+    env.C_AuctionHouse.QueryOwnedAuctions = record("ownedquery")
+    fire("AUCTION_HOUSE_SHOW")
+    fire("OWNED_AUCTIONS_UPDATED")
+    eq(#A.modules.auctions.last.list, 1, "undercut found (55 < 999)")
+    -- profiles
+    local PF = A.modules.profiles
+    truthy(PF:Save("Main"), "profile saved")
+    truthy(PF:Load("Main"), "profile loaded")
+    PF:Set("auto", "Main"); A:Fire("DB_READY"); PF:Delete("Main"); eq(PF:Get("auto"), "")
+    -- fun
+    fire("PLAYER_DEAD")
+    fire("QUEST_TURNED_IN", 101, 100, 0)
+    fire("PLAYER_LEVEL_UP", 23)
+    fire("PLAYER_FLAGS_CHANGED", "player")
+    fire("PLAYER_REGEN_DISABLED")
+    env.SlashCmdList.HAWARYSADDON("fortune")
+    A.modules.moments:Party()
+    A.Fun:CheckBadges()
+    truthy(env.HawarysAddonDB.funStats.badges.death1, "first death badge")
+    eq(#A.Fun:Daily(), 3)
+    env.SlashCmdList.HAWARYSADDON("bis")
+    A:Fire("BUTTONBAG_TOGGLE")
+end)
+
 test("smoke: native theme builds too", function()
     env.HawarysAddonDB.general.theme = "native"
     local B = loadTOC()
     fire("ADDON_LOADED", "HawarysAddon")
     fire("PLAYER_LOGIN")
     for _, page in ipairs({ "home", "general", "journey", "gear", "bags", "qol", "market", "professions", "alts", "dungeons", "discovery", "whatnow", "diary", "quests", "training", "macros" }) do B:OpenWindow(page) end
+end)
+
+test("1.2.0 smoke: Arabic language and every skin load", function()
+    env.HawarysAddonDB.general.theme = "terminal"
+    env.HawarysAddonDB.general.language = "ar"
+    local B = loadTOC()
+    fire("ADDON_LOADED", "HawarysAddon")
+    fire("PLAYER_LOGIN")
+    truthy(B.arabic, "Arabic applied")
+    truthy(B.L.NAV_HOME ~= "Home" and B.L.NAV_HOME:find("\239\187", 1, true), "shaped Arabic (presentation forms)")
+    truthy(B.modules.skins.title ~= "Skins", "module titles swapped")
+    eq(B.L.QUESTS_PIN_LOOT, "Contains a quest item", "untranslated keys stay English")
+    for _, page in ipairs({ "home", "general", "skins", "funstats", "gearplus", "tracker", "journey" }) do B:OpenWindow(page) end
+    env.HawarysAddonDB.general.language = "en"
+    env.HawarysAddonDB.general.theme = "neon"
 end)
 
 print(string.format("\n%d passed, %d failed", passed, failed))

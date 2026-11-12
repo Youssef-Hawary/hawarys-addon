@@ -2,7 +2,7 @@
 ## Title: |cff38c6f4Hawary's|r Addon
 ## Notes: All-in-one for WoW Forever: quest database and map pins, step guide with arrow, gear upgrades, bags, professions, auction prices, dungeons, discoveries, trainer and macro helper. Type /ha
 ## Author: Hawary
-## Version: 1.1.0
+## Version: 1.2.0
 ## IconTexture: Interface\AddOns\HawarysAddon\Media\logo
 ## AddonCompartmentFunc: HawarysAddon_OnAddonCompartmentClick
 ## AddonCompartmentFuncOnEnter: HawarysAddon_OnAddonCompartmentEnter
@@ -14,6 +14,7 @@
 ## X-Website: https://github.com/Youssef-Hawary/hawarys-addon
 
 Locales\enUS.lua
+Locales\arAR.lua
 
 Core\Util.lua
 Core\Init.lua
@@ -40,3 +41,11 @@ Modules\Discovery.xml
 Modules\Adventure.lua
 Modules\Helpers.lua
 Modules\Extras.lua
+Modules\Tracker.lua
+Modules\GearPlus.lua
+Modules\BagsPlus.lua
+Modules\Auctions.lua
+Modules\Travel.lua
+Modules\ButtonBag.lua
+Modules\Profiles.lua
+Modules\Fun.lua

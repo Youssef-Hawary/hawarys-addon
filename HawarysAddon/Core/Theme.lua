@@ -54,7 +54,49 @@ T.palettes = {
     },
 }
 
-function T.name() return (ns.db and ns.db.general.theme) or "neon" end
+-- Skins: neon-style palettes in other colors (For Fun → Skins). Only the addon's own
+-- windows change color; nothing in the game itself is modified.
+local function Skin(over)
+    local p = {}
+    for k, v in pairs(T.palettes.neon) do p[k] = v end
+    for k, v in pairs(over) do p[k] = v end
+    return p
+end
+T.palettes.crimson = Skin({ window = { 0.090, 0.050, 0.060, 0.98 }, sidebar = { 0.070, 0.040, 0.045, 1 }, card = { 0.125, 0.065, 0.075, 1 },
+    card2 = { 0.160, 0.085, 0.095, 1 }, hover = { 0.210, 0.110, 0.120, 1 }, line = { 0.290, 0.140, 0.155, 1 },
+    accent = { 1.000, 0.275, 0.333, 1 }, accent2 = { 0.800, 0.150, 0.200, 1 } })
+T.palettes.arcane = Skin({ window = { 0.040, 0.070, 0.110, 0.98 }, sidebar = { 0.030, 0.055, 0.090, 1 }, card = { 0.060, 0.095, 0.145, 1 },
+    card2 = { 0.080, 0.120, 0.180, 1 }, hover = { 0.110, 0.160, 0.230, 1 }, line = { 0.300, 0.250, 0.150, 1 },
+    accent = { 0.784, 0.667, 0.431, 1 }, accent2 = { 0.600, 0.480, 0.260, 1 } })
+T.palettes.fel = Skin({ window = { 0.040, 0.075, 0.045, 0.98 }, sidebar = { 0.030, 0.060, 0.035, 1 }, card = { 0.060, 0.105, 0.065, 1 },
+    card2 = { 0.075, 0.135, 0.080, 1 }, hover = { 0.100, 0.180, 0.105, 1 }, line = { 0.140, 0.260, 0.150, 1 },
+    accent = { 0.460, 1.000, 0.200, 1 }, accent2 = { 0.250, 0.750, 0.100, 1 } })
+T.palettes.frost = Skin({ window = { 0.070, 0.090, 0.120, 0.98 }, card = { 0.100, 0.130, 0.170, 1 }, card2 = { 0.130, 0.165, 0.210, 1 },
+    accent = { 0.650, 0.900, 1.000, 1 }, accent2 = { 0.400, 0.700, 0.950, 1 } })
+T.palettes.void = Skin({ window = { 0.070, 0.045, 0.110, 0.98 }, sidebar = { 0.055, 0.035, 0.090, 1 }, card = { 0.100, 0.065, 0.150, 1 },
+    card2 = { 0.130, 0.085, 0.190, 1 }, hover = { 0.170, 0.110, 0.240, 1 }, line = { 0.240, 0.160, 0.330, 1 },
+    accent = { 0.720, 0.420, 1.000, 1 }, accent2 = { 0.520, 0.250, 0.850, 1 } })
+T.palettes.sunset = Skin({ window = { 0.110, 0.060, 0.080, 0.98 }, card = { 0.150, 0.080, 0.105, 1 }, card2 = { 0.190, 0.100, 0.130, 1 },
+    hover = { 0.240, 0.130, 0.160, 1 }, line = { 0.330, 0.180, 0.200, 1 },
+    accent = { 1.000, 0.560, 0.250, 1 }, accent2 = { 1.000, 0.330, 0.450, 1 } })
+T.palettes.candy = Skin({ window = { 0.200, 0.090, 0.180, 0.98 }, sidebar = { 0.170, 0.070, 0.150, 1 }, card = { 0.260, 0.120, 0.240, 1 },
+    card2 = { 0.310, 0.150, 0.290, 1 }, hover = { 0.380, 0.190, 0.350, 1 }, line = { 0.500, 0.260, 0.460, 1 },
+    accent = { 1.000, 0.450, 0.800, 1 }, accent2 = { 0.400, 0.900, 1.000, 1 }, text2 = { 0.950, 0.800, 0.920, 1 } })
+T.palettes.terminal = Skin({ window = { 0.000, 0.020, 0.000, 0.98 }, sidebar = { 0.000, 0.015, 0.000, 1 }, card = { 0.010, 0.050, 0.015, 1 },
+    card2 = { 0.020, 0.080, 0.025, 1 }, hover = { 0.030, 0.120, 0.040, 1 }, line = { 0.050, 0.300, 0.080, 1 },
+    accent = { 0.200, 1.000, 0.350, 1 }, accent2 = { 0.100, 0.700, 0.200, 1 },
+    text = { 0.600, 1.000, 0.650, 1 }, text2 = { 0.350, 0.800, 0.420, 1 }, text3 = { 0.200, 0.550, 0.260, 1 }, title = { 0.600, 1.000, 0.650, 1 } })
+T.palettes.banana = Skin({ window = { 0.130, 0.110, 0.020, 0.98 }, sidebar = { 0.100, 0.085, 0.010, 1 }, card = { 0.180, 0.150, 0.030, 1 },
+    card2 = { 0.220, 0.185, 0.040, 1 }, hover = { 0.280, 0.235, 0.060, 1 }, line = { 0.400, 0.340, 0.080, 1 },
+    accent = { 1.000, 0.900, 0.200, 1 }, accent2 = { 0.900, 0.700, 0.100, 1 } })
+
+-- Order shown in the theme dropdown and on the Skins page
+T.skins = { "neon", "native", "crimson", "arcane", "fel", "frost", "void", "sunset", "candy", "terminal", "banana" }
+
+function T.name()
+    local name = (ns.db and ns.db.general.theme) or "neon"
+    return T.palettes[name] and name or "neon"
+end
 function T.native() return T.name() == "native" end
 function T.color(key) return unpack(T.palettes[T.name()][key]) end
 function T.hex(key)
@@ -89,9 +131,24 @@ local fonts = {
 
 local nativeFonts = { h1 = "GameFontNormalLarge", h2 = "GameFontNormal", body = "GameFontHighlight", small = "GameFontHighlightSmall" }
 
+-- Arabic: the bundled font has Arabic + Latin letters (WoW's own fonts have no Arabic).
+local ARABIC_FONT = MEDIA .. "HawarysArabic.ttf"
+function T.UseArabicFonts()
+    T.arabic = true
+    local sizes = { brand = 18, brandBig = 24, h1 = 16, h2 = 13, number = 20, tag = 10, body = 12, small = 11 }
+    for key, f in pairs(fonts) do f:SetFont(ARABIC_FONT, sizes[key] or 12, "") end
+end
+
 function T.font(key)
-    if T.native() and nativeFonts[key] then return _G[nativeFonts[key]] or fonts[key] end
+    if T.native() and nativeFonts[key] and not T.arabic then return _G[nativeFonts[key]] or fonts[key] end
     return fonts[key] or fonts.body
+end
+
+-- Controller: let Forever's own gamepad navigation (SmartNavigation) land on our
+-- buttons. Only marks our own frames; does nothing without a controller UI.
+function T.Focusable(frame)
+    if not (ns.db and ns.db.general.controller) or not SmartNavigation_MarkFrameFocusable then return end
+    pcall(SmartNavigation_MarkFrameFocusable, frame)
 end
 
 ---------------------------------------------------------------------------
@@ -143,7 +200,7 @@ function W.Label(parent, text, fontKey, colorKey, justify)
     local fs = parent:CreateFontString(nil, "OVERLAY")
     fs:SetFontObject(T.font(fontKey or "body"))
     if colorKey then T.TextColor(fs, colorKey) end
-    fs:SetJustifyH(justify or "LEFT")
+    fs:SetJustifyH(justify or (T.arabic and "RIGHT") or "LEFT") -- Arabic reads right to left
     fs:SetText(text or "")
     return fs
 end
@@ -206,6 +263,7 @@ function W.Button(parent, text, kind, width, height)
         b:SetText(text or "")
         b:SetSize(width or math.max(80, b:GetFontString():GetStringWidth() + 30), height)
         b.SetLabel = function(self, t) self:SetText(t) end
+        T.Focusable(b)
         return b
     end
 
@@ -255,6 +313,7 @@ function W.Button(parent, text, kind, width, height)
     end
     b:SetLabel(text or "")
     paint(b, false)
+    T.Focusable(b)
     return b
 end
 
@@ -273,6 +332,7 @@ function W.Toggle(parent, checked, onChange)
         end)
         t.onChange = onChange
         t.SetValue = function(self, v) self:SetChecked(v and true or false) end
+        T.Focusable(t)
         return t
     end
 
@@ -330,6 +390,7 @@ function W.Toggle(parent, checked, onChange)
     t:SetScript("OnEnter", function(self) paint(self, true) end)
     t:SetScript("OnLeave", function(self) paint(self, false) end)
     t:SetValue(checked)
+    T.Focusable(t)
     return t
 end
 

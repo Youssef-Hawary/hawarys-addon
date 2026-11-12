@@ -71,6 +71,8 @@ ns.defaults = {
     version = 1,
     general = {
         theme = "neon",
+        language = "en",
+        controller = true,
         minimap = { show = true, angle = 215 },
         welcome = true,
         toasts = true,
@@ -85,6 +87,9 @@ ns.defaults = {
     goldHistory = {},
     shopping = {},
     discovery = {},
+    junk = {},
+    profiles = {},
+    funStats = {},
 }
 ns.charDefaults = {
     modules = {},
@@ -212,7 +217,8 @@ local function InitDB()
         ns.db.modules[id] = U.mergeDefaults(ns.db.modules[id], d)
         ns.cdb.modules[id] = U.mergeDefaults(ns.cdb.modules[id], m.charDefaults)
     end
-    if ns.db.general.theme ~= "neon" and ns.db.general.theme ~= "native" then ns.db.general.theme = "neon" end
+    if not ns.Theme.palettes[ns.db.general.theme] then ns.db.general.theme = "neon" end
+    if ns.db.general.language == "ar" and ns.ApplyArabic then ns.Safe(ns.ApplyArabic) end
 end
 
 core:SetScript("OnEvent", function(_, event, arg1, arg2)
@@ -266,6 +272,10 @@ SlashCmdList.HAWARYSADDON = function(msg)
         ns:Print("/ha now – what should I do next?")
         ns:Print("/ha session – XP, gold and quests this session")
         ns:Print("/ha sort – sort your bags")
+        ns:Print("/ha fly – point to the nearest flight master")
+        ns:Print("/ha tracker – show or hide the quest tracker")
+        ns:Print("/ha bis – best-in-slot finder")
+        ns:Print("/ha fortune – today's fortune")
         ns:Print("/ha stats – print the raw stats of the item under your mouse")
         ns:Print("/ha version")
     elseif cmd == "version" then
@@ -280,6 +290,14 @@ SlashCmdList.HAWARYSADDON = function(msg)
         ns:Fire("EXTRAS_SESSION")
     elseif cmd == "sort" then
         ns:Fire("EXTRAS_SORT")
+    elseif cmd == "fly" then
+        ns:Fire("TRAVEL_NEAREST")
+    elseif cmd == "fortune" then
+        ns:Fire("FUN_FORTUNE")
+    elseif cmd == "bis" then
+        ns:OpenWindow("gearplus")
+    elseif cmd == "tracker" then
+        ns:Fire("TRACKER_TOGGLE")
     else
         ns:OpenWindow(cmd)
     end
@@ -295,6 +313,15 @@ function HawarysAddon_OnAddonCompartmentClick(_, buttonName)
         ns:ToggleWindow()
     end
 end
+
+-- Key bindings (Bindings.xml): bindable to a keyboard key or a controller button
+BINDING_HEADER_HAWARYSADDON = "Hawary's Addon"
+BINDING_NAME_HAWARYSADDON_TOGGLE = "Open / close Hawary's Addon"
+BINDING_NAME_HAWARYSADDON_GUIDE = "Show / hide the guide window"
+BINDING_NAME_HAWARYSADDON_TRACKER = "Show / hide the quest tracker"
+function HawarysAddon_Toggle() ns:ToggleWindow() end
+function HawarysAddon_ToggleGuide() ns:Fire("JOURNEY_TOGGLE") end
+function HawarysAddon_ToggleTracker() ns:Fire("TRACKER_TOGGLE") end
 
 function HawarysAddon_OnAddonCompartmentEnter(_, menuButtonFrame)
     GameTooltip:SetOwner(menuButtonFrame, "ANCHOR_LEFT")

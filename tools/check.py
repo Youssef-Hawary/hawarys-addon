@@ -23,6 +23,9 @@ ALLOWED_WRITES = {
     "HawarysAddon_OnAddonCompartmentClick", "HawarysAddon_OnAddonCompartmentEnter",
     "HawarysAddon_OnAddonCompartmentLeave",
     "SLASH_HAWARYSADDON1", "SLASH_HAWARYSADDON2", "SLASH_HAWARYSADDON3",
+    # key bindings (Bindings.xml)
+    "BINDING_HEADER_HAWARYSADDON", "BINDING_NAME_HAWARYSADDON_TOGGLE", "BINDING_NAME_HAWARYSADDON_GUIDE",
+    "BINDING_NAME_HAWARYSADDON_TRACKER", "HawarysAddon_Toggle", "HawarysAddon_ToggleGuide", "HawarysAddon_ToggleTracker",
     "HawarysDiscoveryPinMixin", "HawarysQuestPinMixin",  # referenced by Modules/Discovery.xml
 }
 
@@ -63,6 +66,9 @@ REVIEWED = {
     # quest data: our load-on-demand data addon's global, and QuestieDB's public global (optional)
     "HawarysQuestData", "HawarysGuides", "LibQuestieDB", "bit", "loadstring", "load",
     # trainer + macro window functions used by Blizzard's own Forever TrainerUI / MacroUI
+    # 1.2.0: merchant window (Blizzard_UIPanels_Game/Vanilla/MerchantFrame.xml), the jump binding
+    # function (Blizzard_FrameXML/Bindings_Camelot.xml)
+    "MerchantFrame", "JumpOrAscendStart",
     "GetNumTrainerServices", "GetTrainerServiceInfo", "GetTrainerServiceCost", "CreateMacro", "GetNumMacros", "Constants",
 }
 

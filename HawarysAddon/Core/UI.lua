@@ -12,11 +12,18 @@ local General = {
     id = "general",
     title = L.NAV_GENERAL,
     desc = L.GENERAL_DESC,
-    defaults = { theme = "neon", welcome = true, toasts = true, scale = 1, minimapShow = true },
+    defaults = { theme = "neon", language = "en", controller = true, welcome = true, toasts = true, scale = 1, minimapShow = true },
     noToggle = true,
     options = {
         { type = "dropdown", key = "theme", label = L.THEME, desc = L.THEME_DESC,
-          values = function() return { { value = "neon", text = L.THEME_NEON }, { value = "native", text = L.THEME_NATIVE } } end },
+          values = function()
+              local out = {}
+              for _, id in ipairs(T.skins) do out[#out + 1] = { value = id, text = L["SKIN_" .. id:upper()] } end
+              return out
+          end },
+        { type = "dropdown", key = "language", label = L.LANGUAGE, desc = L.LANGUAGE_DESC,
+          values = function() return { { value = "en", text = "English" }, { value = "ar", text = L.LANGUAGE_AR } } end },
+        { type = "toggle", key = "controller", label = L.CONTROLLER, desc = L.CONTROLLER_DESC },
         { type = "toggle", key = "minimapShow", label = L.MINIMAP_BUTTON, desc = L.MINIMAP_BUTTON_DESC },
         { type = "toggle", key = "welcome", label = L.WELCOME_TOAST, desc = L.WELCOME_TOAST_DESC },
         { type = "toggle", key = "toasts", label = L.TOASTS, desc = L.TOASTS_DESC },
@@ -35,9 +42,9 @@ function General:Set(key, value)
     if key == "minimapShow" then
         ns.db.general.minimap.show = value
         ns:UpdateMinimapButton()
-    elseif key == "theme" then
-        if ns.db.general.theme ~= value then
-            ns.db.general.theme = value
+    elseif key == "theme" or key == "language" then
+        if ns.db.general[key] ~= value then
+            ns.db.general[key] = value
             StaticPopup_Show("HAWARYS_ADDON_RELOAD")
         end
     else
@@ -357,6 +364,7 @@ local function NavButton(parent, id, label, isSoon)
     b:SetScript("OnLeave", function(self) if not self.active then T.Tint(self.bg, { 0, 0, 0, 0 }) end end)
     b:SetScript("OnClick", function(self) T.Sound("nav"); ns:ShowPage(self.id) end)
     navButtons[id] = b
+    T.Focusable(b)
     return b
 end
 
@@ -410,7 +418,13 @@ local function BuildWindow()
     add(NavButton(list, "home", L.NAV_HOME))
     add(NavButton(list, "general", L.NAV_GENERAL))
     section(L.HOME_MODULES)
-    for _, mod in ipairs(ns.moduleOrder) do add(NavButton(list, mod.id, mod.title)) end
+    for _, mod in ipairs(ns.moduleOrder) do
+        if mod.category ~= "fun" then add(NavButton(list, mod.id, mod.title)) end
+    end
+    section(L.NAV_FUN)
+    for _, mod in ipairs(ns.moduleOrder) do
+        if mod.category == "fun" then add(NavButton(list, mod.id, mod.title)) end
+    end
     if #ns.roadmap > 0 then
         section(L.NAV_COMING)
         for _, item in ipairs(ns.roadmap) do add(NavButton(list, item.id, item.title, true)) end
@@ -542,7 +556,7 @@ local function BuildMinimap()
     mini:SetSize(32, 32)
     mini:SetFrameStrata("MEDIUM")
     mini:SetFrameLevel(8)
-    mini:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+    mini:RegisterForClicks("LeftButtonUp", "RightButtonUp", "MiddleButtonUp")
     mini:RegisterForDrag("LeftButton")
     mini.glow = mini:CreateTexture(nil, "BACKGROUND")
     mini.glow:SetTexture(ns.media .. "glow")
@@ -556,6 +570,7 @@ local function BuildMinimap()
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
         GameTooltip:SetText(L.ADDON_TITLE, T.color("accent"))
         GameTooltip:AddLine(L.MINIMAP_BUTTON_DESC, 1, 1, 1, true)
+        if ns.modules.buttonbag and ns.modules.buttonbag.enabled then GameTooltip:AddLine(L.MINIMAP_BAG_HINT, 0.7, 0.7, 0.7, true) end
         GameTooltip:Show()
     end)
     mini:SetScript("OnLeave", function(self)
@@ -563,7 +578,9 @@ local function BuildMinimap()
         GameTooltip:Hide()
     end)
     mini:SetScript("OnClick", function(_, btn)
-        if btn == "RightButton" then ns:OpenBlizzardSettings() else ns:ToggleWindow() end
+        if btn == "MiddleButton" or (btn == "LeftButton" and IsShiftKeyDown()) then
+            ns:Fire("BUTTONBAG_TOGGLE", mini)
+        elseif btn == "RightButton" then ns:OpenBlizzardSettings() else ns:ToggleWindow() end
     end)
     mini:SetScript("OnDragStart", function(self)
         self:SetScript("OnUpdate", function()

@@ -5,7 +5,7 @@
 **One addon for World of Warcraft: Forever** that brings together what the most popular addons do, with one clean Hawary look and one settings window.
 
 - **Game:** World of Warcraft: Forever, client 1.60.1, `## Interface: 16001`
-- **Version:** 1.1.0 (adds Extras: quest-done alert, level-up summary, /ha session, /ha sort, settings export/import)
+- **Version:** 1.2.0 (12 new features, a **For Fun** category with 10 fun extras, Arabic, controller support)
 - **License:** GPL-3.0-or-later. Free forever, code fully visible, as Blizzard's add-on policy requires.
 
 ## What's in it
@@ -28,6 +28,32 @@
 | **Journey Diary** | Overwolf clips, Journey Forever | A **timeline** of your road to 60 (levels, dungeon clears, epics, rares, gold and quest milestones) with **optional screenshots**. |
 | **Quality of Life** | Leatrix Plus, Leatrix Maps, BlizzMove | Auto repair (guild funds optional), sell junk, instant loot, accept invites from friends & guild, decline duels, max camera distance, coordinates on the minimap and world map, drag Blizzard windows. |
 
+### New in 1.2.0
+
+| Module | Like | What it does |
+|---|---|---|
+| **Quest Tracker+** | Questie, Zygor | Compact tracker with the **distance** to each quest, **party members on the same quest**, and **click to point the arrow**. **Quest icons over NPC nameplates** (`!` pick up, `?` turn in, `*` needed). |
+| **BiS & Sets** | Pawn, Zygor gear finder | **Best-in-slot finder** for your level and the next 5 levels, from your bags, your alts, the auction house and quest rewards. **Equipment sets** with one-click swaps (out of combat). |
+| **Bag Categories & Junk** | Baganator, Scrap | Bags grouped into categories. **Your own junk list**: drag items in, and at a merchant each click on *Sell junk* sells one stack. |
+| **Auction Watch** | Auctionator | Tells you which of your auctions has been **undercut**. It never cancels or reposts. |
+| **Flight Paths** | Zygor travel | The nearest known flight master (`/ha fly`), the ones you still need on this continent, and map pins. |
+| **Minimap Button Bag** | MinimapButtonButton | Other addons' minimap buttons in one drawer (middle-click or Shift-click the Hawary button). |
+| **Profiles** | Ace profiles | Save settings by name, load on any character, auto-load per character. |
+| **Controller & key bindings** | ConsolePort-lite | Hawary's buttons work with Forever's gamepad navigation. Key bindings for the window, the guide and the tracker. |
+| **Arabic (العربية)** | – | General → Language. Text is pre-shaped and bundled with an Arabic font, because WoW doesn't join Arabic letters itself. First version: some texts are still English. |
+
+### For Fun
+
+| Page | What it does |
+|---|---|
+| **Skins** | 11 looks for Hawary's Addon: Neon, Blizzard, Tactical Red, Arcane Gold, Fel Green, Frostbite, Void Purple, Sunset Pop, Bubblegum, Hacker Terminal, Banana Mode. |
+| **Fashion Studio** | Random outfits (from your items, or **wild** from any item) on a preview of your character. |
+| **Fun Stats & Badges** | Jumps, deaths, yards walked, quests, gold and hearthstones. 21 silly badges and **3 daily challenges** with a streak. |
+| **Hex Hop** | A 30-second click mini-game with combos and golden hexes. |
+| **Fun Moments** | Fortune of the day (`/ha fortune`), confetti when you level up, a death roast, and an AFK screen with your character turning slowly. |
+
+Game-file skin changers, like the ones for Valorant or LoL, are **not** in here and never will be: they get accounts banned. See [docs/SAFETY.md](docs/SAFETY.md).
+
 The **Home** dashboard shows your character, gold across all characters, average item level, upgrades waiting in your bags, every module's on/off switch and what's coming next.
 
 **Two themes**, switchable in General:
@@ -38,7 +64,7 @@ Everything is also in Blizzard's own **Options → AddOns → Hawary's Addon** m
 
 ## Coming next
 
-Talents & Training · Macro Helper (normal Blizzard macros only) · ready-made Forever leveling routes (once quest IDs and coordinates are verified in game).
+More Arabic texts · more languages · ideas from you.
 
 What we learned from the changelogs of Leatrix, Questie, ClassicUI Forever, NaowhForever, SkillUp, BlizzMove and the Overwolf apps is in [docs/RESEARCH.md](docs/RESEARCH.md).
 
@@ -65,10 +91,15 @@ Hawary's Addon follows [Blizzard's UI Add-On Development Policy](https://us.foru
 | `/ha now` | what should I do next? |
 | `/ha options` | Blizzard's options menu for the addon |
 | `/ha journey` · `/ha gear` · `/ha bags` · `/ha qol` · `/ha general` | open a page |
+| `/ha tracker` | show or hide the quest tracker |
+| `/ha fly` | map pin to the nearest flight master you know |
+| `/ha bis` | best-in-slot finder |
+| `/ha fortune` | today's fortune |
+| `/ha session` · `/ha sort` | session report · sort bags |
 | `/ha stats` | print the raw stats of the item under your mouse (helps tune stat weights) |
 | `/ha version` | show the version |
 
-Minimap button: **left-click** opens the window, **right-click** opens the options, **drag** moves it.
+Minimap button: **left-click** opens the window, **right-click** opens the options, **middle-click / Shift-click** opens the button bag, **drag** moves it. Key bindings: Options → Keybindings → AddOns → Hawary's Addon.
 
 ## For developers
 
@@ -89,6 +120,7 @@ tools/check.py         syntax check + "every global exists in the Forever API" c
 luajit tests/run.lua          # unit + smoke tests
 python3 tools/check.py        # Lua 5.1 syntax + Forever API globals
 python3 tools/make_brand.py   # rebuild logo, textures, font and banner
+python3 tools/build_arabic.py --font   # Arabic strings (locales/ar.txt) + Arabic font (needs fontTools)
 ```
 
 APIs were checked against Blizzard's Forever UI source (`Gethe/wow-ui-source`, branch `forever`, build 1.60.1.70888) and the Forever API reference for build 1.60.1.70755. See [docs/API-NOTES.md](docs/API-NOTES.md).
@@ -99,4 +131,5 @@ APIs were checked against Blizzard's Forever UI source (`Gethe/wow-ui-source`, b
 - **Quest data** from [QuestieDB](https://github.com/Questie/QuestieDB) (copying under GPLv3 allowed by the Questie team) – see `HawarysAddon_QuestData/CREDITS.md`. Not affiliated with Questie or Polestar.
 
 - Chakra Petch font: SIL Open Font License (`HawarysAddon/Media/OFL-ChakraPetch.txt`).
+- Arabic font `HawarysArabic.ttf`: built from Noto Sans Arabic + Noto Sans (SIL Open Font License, © Google / the Noto authors), `HawarysAddon/Media/OFL-Noto.txt`.
 - Feature ideas from the addons listed above. No code was copied from them.

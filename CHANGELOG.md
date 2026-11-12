@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.2.0 (2026-11-12)
+
+- **Quest Tracker+:**
+  - Distance to every quest and party members on the same quest.
+  - Click a quest to point the Hawary arrow and Blizzard's marker at it.
+  - Quest icons over NPC nameplates.
+- **BiS & Sets:** a best-in-slot finder (now and the next 5 levels) from your bags, alts, the auction house and quest rewards. Blizzard equipment sets with one-click swaps.
+- **Bag Categories & Junk:** bags grouped by category, and your own junk list with a one-stack-per-click *Sell junk* button.
+- **Auction Watch:** undercut warning, information only.
+- **Flight Paths:** the nearest known flight master, the missing ones on this continent, and a notice when one is nearby (`/ha fly`).
+- **Minimap Button Bag:** addon minimap buttons in one drawer.
+- **Profiles:** save, load and auto-load settings per character.
+- **Controller support:** Forever's gamepad navigation lands on Hawary buttons, plus key bindings for the window, the guide and the tracker.
+- **Arabic (العربية)**, first version: 249 strings, pre-shaped right-to-left text and a bundled Arabic font (tools/build_arabic.py).
+- **New "For Fun" category:**
+  - Skins: 11 looks for Hawary's Addon.
+  - Fashion Studio: random and wild outfits on a preview model.
+  - Fun Stats & Badges: 21 badges and 3 daily challenges.
+  - Hex Hop: a mini-game.
+  - Fun Moments: fortune of the day, level-up confetti, death roast, AFK show.
+- Safety: everything re-audited. Only two buttons act in game, both one action per click and never in combat. A game-file "skin changer" (Valorant/LoL style) was refused as bannable.
+- Tests: 42.
+
 ## 1.0.0 (2026-11-12)
 
 - **Leveling routes 1-60** for Alliance and Horde (146 guides, 11,433 steps, converted from Polestar, GPLv3): pick faction, race and class → *Start my route*; finished steps are skipped, race/class steps filtered, next zone chains in automatically; sections and tips shown in the guide window.
