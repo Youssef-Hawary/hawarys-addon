@@ -84,6 +84,7 @@ ns.defaults = {
     prices = {},
     goldHistory = {},
     shopping = {},
+    discovery = {},
 }
 ns.charDefaults = {
     modules = {},
@@ -262,6 +263,7 @@ SlashCmdList.HAWARYSADDON = function(msg)
         ns:Print("/ha options – Blizzard options menu")
         ns:Print("/ha home | journey | gear | bags | qol | general – open a page")
         ns:Print("/ha guide – show or hide the guide window")
+        ns:Print("/ha now – what should I do next?")
         ns:Print("/ha stats – print the raw stats of the item under your mouse")
         ns:Print("/ha version")
     elseif cmd == "version" then
@@ -270,6 +272,8 @@ SlashCmdList.HAWARYSADDON = function(msg)
         ns:Fire("DEBUG_STATS")
     elseif cmd == "guide" then
         ns:Fire("JOURNEY_TOGGLE")
+    elseif cmd == "now" then
+        ns:Fire("WHATNOW_PRINT")
     else
         ns:OpenWindow(cmd)
     end

@@ -301,6 +301,7 @@ end
 function Gear:ScanBags(initial)
     local seen = self.seen or {}
     local count = 0
+    local links = {}
     for bag = Enum.BagIndex.Backpack, Enum.BagIndex.Bag_4 do
         for slot = 1, C_Container.GetContainerNumSlots(bag) do
             local link = C_Container.GetContainerItemLink(bag, slot)
@@ -308,6 +309,7 @@ function Gear:ScanBags(initial)
                 local r = self:Evaluate(link)
                 if IsUpgrade(r) then
                     count = count + 1
+                    links[#links + 1] = { link = link, pct = r.pct or 100 }
                     if not initial and not seen[link] and self:Get("toast") then
                         ns:Toast(L.MOD_GEAR, L.GEAR_NEW_UPGRADE:format(link, r.pct or 100), C_Item.GetItemIconByID(link))
                     end
@@ -318,6 +320,8 @@ function Gear:ScanBags(initial)
     end
     self.seen = seen
     self.upgradeCount = count
+    table.sort(links, function(a, b) return a.pct > b.pct end)
+    self.upgradeLinks = links
 end
 
 function Gear:AverageItemLevel()

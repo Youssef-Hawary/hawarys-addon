@@ -2,7 +2,7 @@
 ## Title: |cff38c6f4Hawary's|r Addon
 ## Notes: All-in-one for WoW Forever: gear upgrades, best quest reward, item counts across characters, quality of life. Type /ha
 ## Author: Hawary
-## Version: 0.3.0
+## Version: 0.4.0
 ## IconTexture: Interface\AddOns\HawarysAddon\Media\logo
 ## AddonCompartmentFunc: HawarysAddon_OnAddonCompartmentClick
 ## AddonCompartmentFuncOnEnter: HawarysAddon_OnAddonCompartmentEnter
@@ -30,3 +30,8 @@ Modules\MarketData.lua
 Modules\Market.lua
 Modules\Professions.lua
 Modules\Alts.lua
+Modules\AdventureData.lua
+Modules\Dungeons.lua
+Modules\Discovery.lua
+Modules\Discovery.xml
+Modules\Adventure.lua

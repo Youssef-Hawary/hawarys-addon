@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.4.0 (2026-11-12) – Phase 4: Dungeons, Discovery, What now?, Journey Diary
+
+- **Dungeons:**
+  - An **Adventure Planner** built from Blizzard's own Group Finder activities (name, minimum and suggested levels, group size), grouped into "Right for your level", "Coming up" and optionally "Below your level". Forever has no Encounter Journal, so this is the real data source.
+  - A **dungeon log** of runs, time, bosses killed and your best time per dungeon.
+- **Discovery:**
+  - Your own **world-map layer**, using Blizzard's map data provider and pin system.
+  - **Rare alerts** with an optional sound, when you target, mouse over (out of combat) or see a rare on the minimap.
+  - **Herbs, ore and chests** are remembered when you gather or open them, with nearby repeats merged. Forever blocks reading minimap dots, so we don't.
+- **What now?** A Home card and `/ha now` rank your next move: repair, bag space, an upgrade to equip, turn-ins, trainer, a dungeon for your level, the shopping list, rested XP.
+- **Journey Diary:** a timeline of level-ups, dungeon clears, epics, rares, gold milestones and every 100 quests. **Optional screenshots** (off by default).
+- Tests: 33 (planner, sightings, What-now priorities, gold milestones, plus a smoke run of dungeon, rare, gathering, What-now and diary).
+
 ## 0.3.0 (2026-11-12) – Phase 3: Professions, Market, Alts & Gold
 
 - **Professions:**

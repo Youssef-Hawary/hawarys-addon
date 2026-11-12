@@ -46,6 +46,9 @@ These are the same things Leatrix Plus, Questie and Baganator have done for year
 
 - Market reads auction results you already see (browse and search), plus one full scan when **you** click Scan (Blizzard's own limit is once per 15 minutes). It **never buys, bids, posts or cancels**. Professions only reads your own recipe list while you have it open and **never crafts**.
 
+- Discovery only reads what **you** see: your target or mouseover (never in combat), rares Blizzard already shows on your minimap, and your own gathering casts. It never scans nameplates and never reads minimap herb or ore dots, which Forever blocks. Map pins use Blizzard's official data provider and pin system.
+- Journey Diary's screenshots are **off by default**, and they're only taken at milestones.
+
 ## Never-build list (lessons from other addons' changelogs, see RESEARCH.md)
 Layer detection (Blizzard obfuscated GUIDs to stop it), reading minimap herb or ore dots (blocked in Forever), raid marks, chat or emote sends or crafting from code without a click, auto-confirming enchant-replace popups, telemetry that's on by default, paid or premium features.
 

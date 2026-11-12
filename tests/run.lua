@@ -277,6 +277,56 @@ test("age, gold series and item search", function()
     eq(#MD.SearchNames({ [1] = "A" }, "a"), 0, "needs 2 letters")
 end)
 
+loadInto(ns, "Modules/AdventureData.lua")
+local AD = ns.AdventureData
+
+test("adventure planner: now / soon / done by level", function()
+    local acts = {
+        { name = "Low", minLevel = 10, minSugg = 13, maxSugg = 18 },
+        { name = "Mine", minLevel = 15, minSugg = 18, maxSugg = 23 },
+        { name = "Next", minLevel = 20, minSugg = 24, maxSugg = 30 },
+        { name = "Far", minLevel = 40, minSugg = 45, maxSugg = 52 },
+        { name = "OpenEnded", minLevel = 19 },
+    }
+    local now, soon, done = AD.Classify(acts, 20)
+    eq(#now, 2); eq(now[1].name, "Mine"); eq(now[2].name, "OpenEnded")
+    eq(#soon, 1); eq(soon[1].name, "Next")
+    eq(#done, 1); eq(done[1].name, "Low")
+    eq(AD.LevelRange(acts[2]), "18-23"); eq(AD.LevelRange(acts[5]), "19")
+    local stats = {}
+    AD.AddRun(stats, { name = "Mine", duration = 1800, bosses = 3, finish = 10 })
+    AD.AddRun(stats, { name = "Mine", duration = 1500, bosses = 3, finish = 20 })
+    AD.AddRun(stats, { name = "Mine", duration = 900, bosses = 0, finish = 30 })
+    eq(stats.Mine.runs, 3); eq(stats.Mine.best, 1500, "runs without bosses don't count as best"); eq(stats.Mine.last, 30)
+end)
+
+test("discovery: nearby sightings merge, far ones don't", function()
+    local store = {}
+    local _, new1 = AD.AddSighting(store, "node", "Peacebloom", 0.500, 0.500, 1)
+    local e, new2 = AD.AddSighting(store, "node", "Peacebloom", 0.502, 0.501, 2)
+    local _, new3 = AD.AddSighting(store, "node", "Peacebloom", 0.600, 0.500, 3)
+    truthy(new1); truthy(not new2); truthy(new3)
+    eq(e.count, 2); eq(e.last, 2)
+    local _, rareNew = AD.AddSighting(store, "rare", "Peacebloom", 0.5, 0.5, 4)
+    truthy(rareNew, "a rare is separate from a herb with the same name")
+end)
+
+test("what now: priorities", function()
+    local list = AD.Suggestions({ turnins = 2, durability = 0.1, freeSlots = 10, upgrades = { { link = "x", pct = 12 } }, rested = true })
+    eq(list[1].key, "repair"); eq(list[2].key, "upgrade"); eq(list[3].key, "turnin"); eq(list[#list].key, "rested")
+    eq(AD.Suggestions({ freeSlots = 20 })[1].key, "quest", "nothing urgent -> go questing")
+    eq(AD.Suggestions({ freeSlots = 1 })[1].key, "bags")
+end)
+
+test("diary: gold milestones and trimming", function()
+    eq(AD.GoldMilestone(50000, 120000), 10)
+    eq(AD.GoldMilestone(50000, 15000000), 1000, "highest crossed")
+    eq(AD.GoldMilestone(200000, 300000), nil)
+    local l = { 1, 2, 3, 4, 5 }
+    AD.Trim(l, 3)
+    eq(table.concat(l, ","), "3,4,5")
+end)
+
 ---------------------------------------------------------------------------
 -- Part 2: smoke test with a mocked WoW API
 ---------------------------------------------------------------------------
@@ -453,6 +503,41 @@ env.C_AuctionHouse = {
         return nil, nil, r[2], 1, true, 1, nil, 0, 0, r[3], 0, nil, nil, nil, nil, 0, r[1], true
     end,
 }
+-- Phase 4: group finder list, instances, rares, gathering, map canvas
+local instance = { "Hawarys Hold", "none" }
+env.GetInstanceInfo = function() return instance[1], instance[2] end
+env.C_LFGList = {
+    GetAvailableCategories = function() return { 2 } end,
+    GetLfgCategoryInfo = function() return { name = "Dungeons" } end,
+    GetAvailableActivities = function() return { 11, 12, 13 } end,
+    GetActivityInfoTable = function(id)
+        if id == 11 then return { fullName = "Hawarys Hold", minLevel = 15, minLevelSuggestion = 18, maxLevelSuggestion = 24, maxNumPlayers = 5 } end
+        if id == 12 then return { fullName = "Arena", isPvpActivity = true, minLevel = 10 } end
+        return { fullName = "Deep Vault", minLevel = 22, minLevelSuggestion = 23, maxLevelSuggestion = 28, maxNumPlayers = 5 }
+    end,
+}
+local targetClass = "normal"
+env.UnitClassification = function() return targetClass end
+env.UnitExists = function() return false end
+env.C_Spell = { GetSpellName = function() return "Herb Gathering" end }
+env.C_VignetteInfo = { GetVignetteInfo = function() return nil end }
+env.GetInventoryItemDurability = function(slot) if slot == 5 then return 5, 100 end return nil end
+env.GetXPExhaustion = function() return 500 end
+env.GetZoneText = function() return "Test Valley" end
+env.Screenshot = record("screenshot")
+env.C_Container.GetContainerNumFreeSlots = function() return 4, 0 end
+env.CreateFromMixins = function(...)
+    local out = {}
+    for _, m in ipairs({ ... }) do for k, v in pairs(m) do out[k] = v end end
+    return out
+end
+env.MapCanvasPinMixin = {}
+env.MapCanvasDataProviderMixin = {}
+env.WorldMapFrame = newFrame()
+env.WorldMapFrame.ScrollContainer = newFrame()
+env.WorldMapFrame.AddDataProvider = record("addprovider")
+env.WorldMapFrame.IsShown = function() return false end
+env.C_Map.GetMapInfo = function() return { name = "Test Valley" } end
 env.C_TradeSkillUI = {
     IsNPCCrafting = function() return false end,
     GetBaseProfessionInfo = function() return { professionName = "Mining" } end,
@@ -604,12 +689,64 @@ test("smoke: market prices, full scan, professions, shopping list, alts", functi
     A:OpenWindow("professions")
 end)
 
+test("smoke: dungeons planner + log, discovery, what now, diary", function()
+    local Dg, Ds, Nw, Dy = A.modules.dungeons, A.modules.discovery, A.modules.whatnow, A.modules.diary
+    truthy(Dg:IsEnabled() and Ds:IsEnabled() and Nw:IsEnabled() and Dy:IsEnabled(), "phase 4 modules enabled")
+    eq(calls.addprovider, 1, "map layer registered with Blizzard's data provider")
+    local acts = Dg:Activities()
+    eq(#acts, 2, "PvP activity skipped")
+    eq(Dg:Suggestion().name, "Hawarys Hold") -- player is level 20
+
+    -- a dungeon run: enter, kill 2 bosses, leave
+    instance[1], instance[2] = "Hawarys Hold", "party"
+    fire("ZONE_CHANGED_NEW_AREA")
+    truthy(Dg.run, "run started")
+    Dg.run.start = Dg.run.start - 1200
+    fire("ENCOUNTER_END", 1, "Boss A", 1, 5, 1)
+    fire("ENCOUNTER_END", 2, "Boss B", 1, 5, 1)
+    fire("ENCOUNTER_END", 3, "Wipe", 1, 5, 0)
+    instance[1], instance[2] = "Test Valley", "none"
+    fire("ZONE_CHANGED_NEW_AREA")
+    local stats = Dg:Get("stats")["Hawarys Hold"]
+    eq(stats.runs, 1); truthy(stats.best >= 1200)
+    eq(Dg:Get("runs")[1].bosses, 2)
+    eq(Dg:Suggestion(), nil, "already ran Hawarys Hold; Deep Vault (23+) is not for level 20 yet")
+
+    -- rare
+    targetClass = "rare"
+    fire("PLAYER_TARGET_CHANGED")
+    local rares = Ds:Totals()
+    eq(rares, 1)
+    targetClass = "normal"
+
+    -- gathering a herb (cast on an object, then loot)
+    fire("UNIT_SPELLCAST_SENT", "player", "Peacebloom", "cast-1", 2366)
+    fire("UNIT_SPELLCAST_SUCCEEDED", "player", "cast-1", 2366)
+    fire("LOOT_OPENED")
+    local _, nodes = Ds:Totals()
+    eq(nodes, 1)
+
+    -- what now: gear at 5% durability -> repair first
+    local list = Nw:List()
+    eq(list[1].key, "repair")
+    for _, cmd in ipairs({ "now" }) do env.SlashCmdList.HAWARYSADDON(cmd) end
+
+    -- diary: level up with screenshots on
+    Dy:Set("screenshots", true)
+    fire("PLAYER_LEVEL_UP", 21)
+    local entries = Dy:Get("entries")
+    truthy(#entries >= 3, "dungeon + rare + level in the diary, got " .. #entries)
+    eq(entries[#entries].kind, "level")
+    eq(calls.screenshot ~= nil, true)
+    for _, page in ipairs({ "home", "dungeons", "discovery", "whatnow", "diary" }) do A:OpenWindow(page) end
+end)
+
 test("smoke: native theme builds too", function()
     env.HawarysAddonDB.general.theme = "native"
     local B = loadTOC()
     fire("ADDON_LOADED", "HawarysAddon")
     fire("PLAYER_LOGIN")
-    for _, page in ipairs({ "home", "general", "journey", "gear", "bags", "qol", "market", "professions", "alts" }) do B:OpenWindow(page) end
+    for _, page in ipairs({ "home", "general", "journey", "gear", "bags", "qol", "market", "professions", "alts", "dungeons", "discovery", "whatnow", "diary" }) do B:OpenWindow(page) end
 end)
 
 print(string.format("\n%d passed, %d failed", passed, failed))

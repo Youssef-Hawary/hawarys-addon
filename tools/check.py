@@ -23,6 +23,7 @@ ALLOWED_WRITES = {
     "HawarysAddon_OnAddonCompartmentClick", "HawarysAddon_OnAddonCompartmentEnter",
     "HawarysAddon_OnAddonCompartmentLeave",
     "SLASH_HAWARYSADDON1", "SLASH_HAWARYSADDON2", "SLASH_HAWARYSADDON3",
+    "HawarysDiscoveryPinMixin",  # referenced by Modules/Discovery.xml
 }
 
 # Lua 5.1 standard library + WoW Lua extensions that the API docs don't list as "fn".
@@ -57,6 +58,8 @@ REVIEWED = {
     # called by Blizzard's own Forever profession UI (Blizzard_Professions/Camelot) and
     # the Forever auction house window (Blizzard_AuctionHouseUI)
     "GetProfessions", "GetProfessionInfo", "AuctionHouseFrame",
+    # durability (Blizzard's Forever PaperDoll/Durability code) and map canvas mixins (Blizzard_MapCanvas)
+    "GetInventoryItemDurability", "MapCanvasPinMixin", "MapCanvasDataProviderMixin",
 }
 
 

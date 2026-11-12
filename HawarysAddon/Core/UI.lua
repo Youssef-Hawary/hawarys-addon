@@ -60,11 +60,11 @@ StaticPopupDialogs.HAWARYS_ADDON_RELOAD = {
 -- Roadmap entries shown in the sidebar until their modules ship
 ns.roadmap = {
     { id = "talents", title = L.MOD_TALENTS, desc = L.MOD_TALENTS_DESC },
-    { id = "dungeons", title = L.MOD_DUNGEONS, desc = L.MOD_DUNGEONS_DESC },
-    { id = "discovery", title = L.MOD_DISCOVERY, desc = L.MOD_DISCOVERY_DESC },
-    { id = "whatnow", title = L.MOD_WHATNOW, desc = L.MOD_WHATNOW_DESC },
     { id = "macrohelp", title = L.MOD_MACROHELP, desc = L.MOD_MACROHELP_DESC },
 }
+
+-- Home dashboard sections, registered by modules: fn(content, width, y) -> newY, refreshFn
+ns.homeSections = {}
 
 -- Home dashboard numbers, registered by modules: fn() -> display text
 ns.stats = {}
@@ -246,6 +246,16 @@ local function BuildHome(parent)
     end
     y = y - 74 - 22
 
+    -- Extra Home sections registered by modules (e.g. "What now?")
+    local sectionRefreshers = {}
+    for _, section in ipairs(ns.homeSections) do
+        local ok, newY, refresh = ns.Safe(section, content, width, y)
+        if ok and newY then
+            y = newY
+            if refresh then sectionRefreshers[#sectionRefreshers + 1] = refresh end
+        end
+    end
+
     -- Modules grid
     local mh = W.Label(content, L.HOME_MODULES, "h2", "text2")
     mh:SetPoint("TOPLEFT", 0, y)
@@ -315,6 +325,7 @@ local function BuildHome(parent)
             local ok, v = ns.Safe(tile.stat.fn)
             tile.value:SetText(ok and v ~= nil and tostring(v) or "–")
         end
+        for _, refresh in ipairs(sectionRefreshers) do ns.Safe(refresh) end
     end
     return scroll
 end

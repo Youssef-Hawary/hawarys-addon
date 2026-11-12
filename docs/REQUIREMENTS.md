@@ -21,7 +21,7 @@ Status: ✅ done (static checks + mocked tests pass; **in-game check not run yet
 | R18 | Overwolf-style features inside the game | 🟡 session stats done | Journey | Adventure planner → Dungeons; own map layer → Discovery |
 | R12 | Talents & Training | 🔜 Phase 2 | | |
 | R13 | Professions, Market, Alts | ✅ 0.3.0 | Modules/Professions, Market, Alts, MarketData | Open a profession window → recipes listed with profit. Browse the AH → prices in tooltips. Full scan max once per 15 min. Alts page lists every character with a gold chart and search |
-| R14 | Dungeons, Discovery, "What now?", Journey Diary | 🔜 Phase 4 | | |
+| R14 | Dungeons, Discovery, "What now?", Journey Diary | ✅ 0.4.0 | Modules/Dungeons, Discovery(.xml), Adventure, AdventureData | Planner lists Group Finder activities for your level. A run is logged after leaving a dungeon. A rare pin appears on the world map. A gathered herb is remembered. The What-now card ranks repair first at low durability. Level-up adds a diary entry |
 | R15 | Macro Helper (normal Blizzard macros only) | 🔜 | | |
 | R16 | GSE-style sequence macros | ❌ dropped for safety | docs/SAFETY.md | |
 | R17 | Controller support for the window | 🔜 | | Not assessed yet. Mouse and keyboard only for now |

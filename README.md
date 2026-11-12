@@ -5,7 +5,7 @@
 **One addon for World of Warcraft: Forever** that brings together what the most popular addons do, with one clean Hawary look and one settings window.
 
 - **Game:** World of Warcraft: Forever, client 1.60.1, `## Interface: 16001`
-- **Version:** 0.3.0 (Phase 3: Professions, Market, Alts & Gold)
+- **Version:** 0.4.0 (Phase 4: Dungeons, Discovery, What now?, Journey Diary)
 - **License:** GPL-3.0-or-later. Free forever, code fully visible, as Blizzard's add-on policy requires.
 
 ## What's in it
@@ -18,6 +18,10 @@
 | **Professions** | SkillUp, Profession Shopping List, ForeverProfit | Profession ranks with progress bars. The recipes you know, **ranked by profit** with auction prices (unknown prices stay "?", never free). A **shopping list** that checks reagents against every character's bags and bank, with the cost of what's missing. Reagent tooltips show "have / need". |
 | **Market** | Auctionator | Remembers **auction house prices** from your normal browsing and searches, plus a **Hawary Scan** button for a full scan (once per 15 min, read in chunks so the game doesn't freeze). Tooltips show the AH price and its age. Prices are kept per auction house. It **never buys, bids or posts**. |
 | **Alts & Gold** | Altoholic, Overwolf character snapshot | Every character's level, item level, gold, professions and last login. A **gold chart** (7–90 days) and an **item search across all your characters**. |
+| **Dungeons** | Dungeon Journal, Overwolf adventure planner | An **Adventure Planner** from Blizzard's own Group Finder list (Forever has no Encounter Journal), showing what fits your level now and what's coming in the next 5 levels. A **dungeon log** with runs, time, bosses and your best time. |
+| **Discovery** | RareScanner, GatherMate2, Overwolf map | Your **own world-map layer** using Blizzard's map pin system. **Rare alerts** when you target, mouse over or see one on the minimap. Herbs, ore and chests are recorded **when you gather or open them**, because Forever blocks reading minimap dots. |
+| **What now?** | (new) | A Home card and `/ha now` with your best next move: repair, full bags, an upgrade to equip, turn-ins, trainer, a dungeon for your level, shopping list, rested XP. Click to open the right page. |
+| **Journey Diary** | Overwolf clips, Journey Forever | A **timeline** of your road to 60 (levels, dungeon clears, epics, rares, gold and quest milestones) with **optional screenshots**. |
 | **Quality of Life** | Leatrix Plus, Leatrix Maps, BlizzMove | Auto repair (guild funds optional), sell junk, instant loot, accept invites from friends & guild, decline duels, max camera distance, coordinates on the minimap and world map, drag Blizzard windows. |
 
 The **Home** dashboard shows your character, gold across all characters, average item level, upgrades waiting in your bags, every module's on/off switch and what's coming next.
@@ -30,7 +34,7 @@ Everything is also in Blizzard's own **Options → AddOns → Hawary's Addon** m
 
 ## Coming next
 
-Dungeons (with an Overwolf-style adventure planner) · Discovery (your own map layer: rares, herbs and ore you found, books) · "What now?" button · Journey Diary · Talents & Training · Macro Helper (normal Blizzard macros only).
+Talents & Training · Macro Helper (normal Blizzard macros only) · ready-made Forever leveling routes (once quest IDs and coordinates are verified in game).
 
 What we learned from the changelogs of Leatrix, Questie, ClassicUI Forever, NaowhForever, SkillUp, BlizzMove and the Overwolf apps is in [docs/RESEARCH.md](docs/RESEARCH.md).
 
@@ -54,6 +58,7 @@ Hawary's Addon follows [Blizzard's UI Add-On Development Policy](https://us.foru
 |---|---|
 | `/ha` | open or close the window (also `/hawary`) |
 | `/ha guide` | show or hide the guide window |
+| `/ha now` | what should I do next? |
 | `/ha options` | Blizzard's options menu for the addon |
 | `/ha journey` · `/ha gear` · `/ha bags` · `/ha qol` · `/ha general` | open a page |
 | `/ha stats` | print the raw stats of the item under your mouse (helps tune stat weights) |
