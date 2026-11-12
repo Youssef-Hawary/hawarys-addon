@@ -264,6 +264,8 @@ SlashCmdList.HAWARYSADDON = function(msg)
         ns:Print("/ha home | journey | gear | bags | qol | general – open a page")
         ns:Print("/ha guide – show or hide the guide window")
         ns:Print("/ha now – what should I do next?")
+        ns:Print("/ha session – XP, gold and quests this session")
+        ns:Print("/ha sort – sort your bags")
         ns:Print("/ha stats – print the raw stats of the item under your mouse")
         ns:Print("/ha version")
     elseif cmd == "version" then
@@ -274,6 +276,10 @@ SlashCmdList.HAWARYSADDON = function(msg)
         ns:Fire("JOURNEY_TOGGLE")
     elseif cmd == "now" then
         ns:Fire("WHATNOW_PRINT")
+    elseif cmd == "session" then
+        ns:Fire("EXTRAS_SESSION")
+    elseif cmd == "sort" then
+        ns:Fire("EXTRAS_SORT")
     else
         ns:OpenWindow(cmd)
     end

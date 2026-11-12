@@ -5,7 +5,7 @@
 **One addon for World of Warcraft: Forever** that brings together what the most popular addons do, with one clean Hawary look and one settings window.
 
 - **Game:** World of Warcraft: Forever, client 1.60.1, `## Interface: 16001`
-- **Version:** 1.0.0
+- **Version:** 1.1.0 (adds Extras: quest-done alert, level-up summary, /ha session, /ha sort, settings export/import)
 - **License:** GPL-3.0-or-later. Free forever, code fully visible, as Blizzard's add-on policy requires.
 
 ## What's in it

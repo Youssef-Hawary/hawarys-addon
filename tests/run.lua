@@ -901,6 +901,22 @@ test("routes: race/class rules, sections/tips, start where you are, chain to nex
     Jm:Set("guide", "auto")
 end)
 
+test("extras: settings code round-trip, sort, session, level summary", function()
+    local X = A.modules.extras
+    local before = env.HawarysAddonDB.modules.qol.repair
+    local data = { general = { theme = "neon" }, modules = { qol = { repair = not before } } }
+    local code = "HAWARY1:" .. ns.Util.base64encode(ns.Util.serialize(data))
+    local back = X.Decode(code)
+    truthy(back, "decodes"); eq(X.Decode("garbage"), nil)
+    X:Apply(back)
+    eq(env.HawarysAddonDB.modules.qol.repair, not before)
+    env.C_Container.SortBags = record("sort")
+    env.SlashCmdList.HAWARYSADDON("sort"); eq(calls.sort, 1)
+    env.SlashCmdList.HAWARYSADDON("session")
+    fire("PLAYER_LEVEL_UP", 22)
+    A:OpenWindow("extras")
+end)
+
 test("smoke: native theme builds too", function()
     env.HawarysAddonDB.general.theme = "native"
     local B = loadTOC()
