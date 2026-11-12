@@ -1,0 +1,17 @@
+## Interface: 16001
+## Title: |cff38c6f4Hawary's|r Addon – Quest Data
+## Notes: Quest, NPC, object and item data for Hawary's Addon (from QuestieDB, GPLv3). Loaded only when needed.
+## Author: Hawary
+## Version: 1.0.0
+## LoadOnDemand: 1
+## Dependencies: HawarysAddon
+## IconTexture: Interface\AddOns\HawarysAddon\Media\logo
+## X-License: GPL-3.0-or-later
+
+Data_info.lua
+Data_quest.lua
+Data_npc.lua
+Data_object.lua
+Data_item.lua
+Data_areaToUiMapOverride.lua
+Data_areaToUiMap.lua

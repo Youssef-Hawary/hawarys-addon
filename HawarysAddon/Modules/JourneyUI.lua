@@ -13,10 +13,11 @@ local ICONS = {
     accept = { "quest_new", GOLD }, turnin = { "quest_done", GOLD }, complete = { "dot", "accent" },
     ["goto"] = { "pin", "accent" }, level = { "star", "accent" }, train = { "book", "text2" },
     hearth = { "pin", "text2" }, fly = { "pin", "text2" }, note = { "dot", "text3" },
+    objective = { "dot", "accent" }, getfp = { "pin", "text2" }, vendor = { "book", "text2" },
 }
 
 local function QuestName(step)
-    if step.text and step.text ~= "" then return step.text end
+    if step.type ~= "objective" and step.text and step.text ~= "" then return step.text end
     if step.questID then
         return C_QuestLog.GetTitleForQuestID(step.questID) or ("#" .. step.questID)
     end
@@ -33,6 +34,13 @@ local function StepTitle(step)
     elseif t == "train" then return name ~= "" and name or L.STEP_TRAIN
     elseif t == "hearth" then return L.STEP_HEARTH:format(name)
     elseif t == "fly" then return L.STEP_FLY:format(name)
+    elseif t == "getfp" then return L.STEP_GETFP:format(name)
+    elseif t == "vendor" then return L.STEP_VENDOR
+    elseif t == "objective" then
+        local o = C_QuestLog.GetQuestObjectives(step.questID)
+        o = o and o[step.obj]
+        if o and o.text and o.text ~= "" then return o.text end
+        return L.STEP_OBJECTIVE:format(C_QuestLog.GetTitleForQuestID(step.questID) or ("#" .. step.questID))
     end
     return name
 end
@@ -243,6 +251,8 @@ local function Update()
             end
         end
         if step.type == "turnin" and view.mode == "auto" then lines[#lines + 1] = L.JOURNEY_READY end
+        if step.section then table.insert(lines, 1, "|cff38c6f4" .. step.section .. "|r") end
+        if step.tip then lines[#lines + 1] = "|cffaeb7c7" .. step.tip .. "|r" end
         if step.done then lines[#lines + 1] = CHECK .. L.JOURNEY_STEP_DONE end
     end
     local textWidth = WIDTH - 16 - 50 - 58
@@ -439,6 +449,44 @@ function Journey:BuildPage(content, width, y)
     local restart = W.Button(card, L.JOURNEY_RESTART, "ghost", 110)
     restart:SetPoint("LEFT", import, "RIGHT", 8, 0)
     restart:SetScript("OnClick", function() Journey:RestartGuide() end)
+    y = y - 112 - 18
+
+    -- Leveling routes: pick faction, race (start zone) and class
+    local RACES = { Alliance = { "Human", "Dwarf", "Gnome", "NightElf", "Skyborne" }, Horde = { "Orc", "Troll", "Tauren", "Undead", "Skyborne" } }
+    local CLASSES = { "WARRIOR", "PALADIN", "HUNTER", "ROGUE", "PRIEST", "SHAMAN", "MAGE", "WARLOCK", "DRUID" }
+    local who = self:Who()
+    local pick = { faction = who.faction == "Horde" and "Horde" or "Alliance", race = nil, class = who.class }
+    local raceFile = who.race == "Scourge" and "Undead" or who.race
+    for _, r in ipairs(RACES[pick.faction]) do if r == raceFile then pick.race = r end end
+    pick.race = pick.race or RACES[pick.faction][1]
+    local routes = W.Card(content)
+    routes:SetPoint("TOPLEFT", 0, y)
+    routes:SetSize(width, 112)
+    local rt = W.Label(routes, L.JOURNEY_ROUTES, "h2", "text")
+    rt:SetPoint("TOPLEFT", 18, -14)
+    local rd = W.Label(routes, L.JOURNEY_ROUTES_DESC, "small", "text3")
+    rd:SetPoint("TOPLEFT", rt, "BOTTOMLEFT", 0, -4)
+    rd:SetWidth(width - 36)
+    rd:SetWordWrap(true)
+    local fdd, rdd, cdd
+    fdd = W.Dropdown(routes, 120, function() return { { value = "Alliance", text = L.JOURNEY_ALLIANCE }, { value = "Horde", text = L.JOURNEY_HORDE } } end,
+        function() return pick.faction end, function(v) pick.faction = v; pick.race = RACES[v][1]; rdd:Refresh() end)
+    fdd:SetPoint("BOTTOMLEFT", 18, 14)
+    rdd = W.Dropdown(routes, 120, function()
+        local out = {}
+        for _, r in ipairs(RACES[pick.faction]) do out[#out + 1] = { value = r, text = r } end
+        return out
+    end, function() return pick.race end, function(v) pick.race = v end)
+    rdd:SetPoint("LEFT", fdd, "RIGHT", 8, 0)
+    cdd = W.Dropdown(routes, 120, function()
+        local out = {}
+        for _, c in ipairs(CLASSES) do out[#out + 1] = { value = c, text = c:sub(1, 1) .. c:sub(2):lower() } end
+        return out
+    end, function() return pick.class end, function(v) pick.class = v end)
+    cdd:SetPoint("LEFT", rdd, "RIGHT", 8, 0)
+    local go = W.Button(routes, L.JOURNEY_START_ROUTE, "primary", 150)
+    go:SetPoint("LEFT", cdd, "RIGHT", 10, 0)
+    go:SetScript("OnClick", function() Journey:StartRoute(pick.faction, pick.race, pick.class); Journey:Set("window", true) end)
     y = y - 112 - 18
 
     y = ns:BuildOptions(self, content, width, y)

@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.0 (2026-11-12)
+
+- **Leveling routes 1-60** for Alliance and Horde (146 guides, 11,433 steps, converted from Polestar, GPLv3): pick faction, race and class → *Start my route*; finished steps are skipped, race/class steps filtered, next zone chains in automatically; sections and tips shown in the guide window.
+- **Quests** (Questie-style, data from QuestieDB): quest givers, turn-ins, every objective spot and hidden objectives on the world map and minimap; quest lines in mob, object and item tooltips; prerequisites, race/class, profession and level rules; uses an installed QuestieDB when present.
+- **Smart Route**: Auto Journey adds the nearest quests you can pick up and points the arrow at the nearest objective spot.
+- **Trainer Planner** and **Macro Helper** with a macro generator (Blizzard macros only).
+- **Scrolling fixed**: the menu scrolls (mouse wheel) and every page has a reliable mouse-wheel handler; window slightly larger.
+- Two new load-on-demand folders: `HawarysAddon_QuestData`, `HawarysAddon_Guides`.
+- Tests: 38.
+
 ## 0.4.0 (2026-11-12) – Phase 4: Dungeons, Discovery, What now?, Journey Diary
 
 - **Dungeons:**

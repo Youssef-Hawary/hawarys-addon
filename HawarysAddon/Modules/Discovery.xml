@@ -20,4 +20,23 @@
 			<OnLoad method="OnLoad"/>
 		</Scripts>
 	</Frame>
+	<Frame name="HawarysQuestPinTemplate" mixin="HawarysQuestPinMixin" enableMouse="true" virtual="true">
+		<Size x="14" y="14"/>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="Glow" file="Interface\AddOns\HawarysAddon\Media\glow">
+					<Size x="30" y="30"/>
+					<Anchors>
+						<Anchor point="CENTER"/>
+					</Anchors>
+				</Texture>
+			</Layer>
+			<Layer level="ARTWORK">
+				<Texture parentKey="Icon" setAllPoints="true"/>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad method="OnLoad"/>
+		</Scripts>
+	</Frame>
 </Ui>

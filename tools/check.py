@@ -23,7 +23,7 @@ ALLOWED_WRITES = {
     "HawarysAddon_OnAddonCompartmentClick", "HawarysAddon_OnAddonCompartmentEnter",
     "HawarysAddon_OnAddonCompartmentLeave",
     "SLASH_HAWARYSADDON1", "SLASH_HAWARYSADDON2", "SLASH_HAWARYSADDON3",
-    "HawarysDiscoveryPinMixin",  # referenced by Modules/Discovery.xml
+    "HawarysDiscoveryPinMixin", "HawarysQuestPinMixin",  # referenced by Modules/Discovery.xml
 }
 
 # Lua 5.1 standard library + WoW Lua extensions that the API docs don't list as "fn".
@@ -60,6 +60,10 @@ REVIEWED = {
     "GetProfessions", "GetProfessionInfo", "AuctionHouseFrame",
     # durability (Blizzard's Forever PaperDoll/Durability code) and map canvas mixins (Blizzard_MapCanvas)
     "GetInventoryItemDurability", "MapCanvasPinMixin", "MapCanvasDataProviderMixin",
+    # quest data: our load-on-demand data addon's global, and QuestieDB's public global (optional)
+    "HawarysQuestData", "HawarysGuides", "LibQuestieDB", "bit", "loadstring", "load",
+    # trainer + macro window functions used by Blizzard's own Forever TrainerUI / MacroUI
+    "GetNumTrainerServices", "GetTrainerServiceInfo", "GetTrainerServiceCost", "CreateMacro", "GetNumMacros", "Constants",
 }
 
 

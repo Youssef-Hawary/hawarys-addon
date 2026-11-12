@@ -49,6 +49,8 @@ These are the same things Leatrix Plus, Questie and Baganator have done for year
 - Discovery only reads what **you** see: your target or mouseover (never in combat), rares Blizzard already shows on your minimap, and your own gathering casts. It never scans nameplates and never reads minimap herb or ore dots, which Forever blocks. Map pins use Blizzard's official data provider and pin system.
 - Journey Diary's screenshots are **off by default**, and they're only taken at milestones.
 
+- Quests, routes, Trainer Planner and Macro Helper are display/advice only. Macros are normal Blizzard macros created by your click; the trainer is never bought from automatically.
+
 ## Never-build list (lessons from other addons' changelogs, see RESEARCH.md)
 Layer detection (Blizzard obfuscated GUIDs to stop it), reading minimap herb or ore dots (blocked in Forever), raid marks, chat or emote sends or crafting from code without a click, auto-confirming enchant-replace popups, telemetry that's on by default, paid or premium features.
 

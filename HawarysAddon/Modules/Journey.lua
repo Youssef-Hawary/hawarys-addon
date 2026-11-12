@@ -18,13 +18,15 @@ local Journey = ns:NewModule("journey", {
         levelUp = true, lock = false, scale = 1,
         windowPos = {}, arrowPos = {},
     },
-    charDefaults = { guide = "auto", step = 1, manual = {} },
+    charDefaults = { guide = "auto", step = 1, manual = {}, who = {} },
 })
 
 Journey.options = {
     { type = "dropdown", key = "guide", label = L.JOURNEY_MODE, desc = L.JOURNEY_MODE_DESC, values = function()
         local out = { { value = "auto", text = L.JOURNEY_AUTO } }
         for _, name in ipairs(ns.Util.sortedKeys(ns.db.guides)) do out[#out + 1] = { value = name, text = name } end
+        local current = Journey:Get("guide")
+        if current and current:find("^pack:") then out[#out + 1] = { value = current, text = Journey:GuideTitle(current) } end
         return out
     end },
     { type = "toggle", key = "window", label = L.JOURNEY_WINDOW, desc = L.JOURNEY_WINDOW_DESC },
@@ -51,8 +53,39 @@ local guideCache = {}
 ---------------------------------------------------------------------------
 -- Guides library (account-wide text in ns.db.guides; progress per character)
 ---------------------------------------------------------------------------
+-- Built-in leveling routes (HawarysAddon_Guides, from Polestar) are named "pack:<id>"
+function Journey:LoadPacks()
+    if not HawarysGuides and C_AddOns.DoesAddOnExist("HawarysAddon_Guides") then C_AddOns.LoadAddOn("HawarysAddon_Guides") end
+    if HawarysGuides and not self.packIndex then
+        self.packIndex = {}
+        for _, e in ipairs(HawarysGuides.list) do self.packIndex[e.id] = e end
+    end
+    return HawarysGuides ~= nil
+end
+
+function Journey:PackInfo(name)
+    local id = name and name:match("^pack:(.+)$")
+    if not id or not self:LoadPacks() then return nil end
+    return self.packIndex[id], id
+end
+
+function Journey:GuideTitle(name)
+    local info = self:PackInfo(name)
+    if info then return ("%s (%s)"):format(info.title or name, info.levels or "") end
+    return name
+end
+
+function Journey:Who()
+    local w = self:CharDB().who or {}
+    local _, raceFile = UnitRace("player")
+    local _, classFile = UnitClass("player")
+    return { race = w.race or raceFile, class = w.class or classFile, faction = w.faction or UnitFactionGroup("player") }
+end
+
 function Journey:Guide(name)
-    local text = ns.db.guides[name]
+    local text
+    local _, packID = self:PackInfo(name)
+    if packID then text = HawarysGuides.text[packID] else text = ns.db.guides[name] end
     if not text then return nil end
     local cached = guideCache[name]
     if cached and cached.text == text then return cached.guide end
@@ -76,6 +109,33 @@ function Journey:DeleteGuide(name)
     guideCache[name] = nil
     self:CharDB().manual[name] = nil
     if self:Get("guide") == name then self:Set("guide", "auto") end
+end
+
+-- Pick the route for a faction / race / class and jump to the first step you haven't done yet,
+-- following the chain of zone guides (Zygor / RestedXP style).
+function Journey:StartRoute(faction, race, class)
+    if not self:LoadPacks() then ns:Print(L.JOURNEY_NO_PACKS); return end
+    self:CharDB().who = { faction = faction, race = race, class = class }
+    local start
+    for _, e in ipairs(HawarysGuides.list) do
+        if not e.category and e.faction == faction and e.race and e.race:lower() == (race or ""):lower() then
+            if not start or e.id < start.id then start = e end
+        end
+    end
+    if not start then ns:Print(L.JOURNEY_NO_ROUTE); return end
+    local id, ctx = start.id, nil
+    for _ = 1, 40 do
+        local guide = J.ParseGuide(HawarysGuides.text[id])
+        ctx = self:Ctx("pack:" .. id)
+        if J.CurrentIndex(guide.steps, 1, ctx) <= #guide.steps then break end
+        local nextID = self.packIndex[id] and self.packIndex[id].next
+        if not (nextID and HawarysGuides.text[nextID]) then break end
+        id = nextID
+    end
+    self.browsing = false
+    self:CharDB().manual["pack:" .. id] = nil
+    self:Set("guide", "pack:" .. id)
+    ns:Print(L.JOURNEY_ROUTE_STARTED, self:GuideTitle("pack:" .. id))
 end
 
 function Journey:RestartGuide()
@@ -136,6 +196,8 @@ function Journey:TargetFor(step)
                 if q.questID == id then return { mapID = best, x = q.x, y = q.y, quest = id } end
             end
         end
+        local db = ns.QuestProvider and ns.QuestProvider.NearestFor(id)
+        if db then return db end
         return { quest = id }
     end
     return nil
@@ -186,6 +248,28 @@ function Journey:Ctx(guideName)
         level = function() return UnitLevel("player") end,
         distance = function(step) return (self:DistanceTo(self:TargetFor(step))) end,
         manual = function(step) return manual[step.line] end,
+        who = self:Who(),
+        objectiveDone = function(q, i)
+            local o = C_QuestLog.GetQuestObjectives(q)
+            return o and o[i] and o[i].finished or false
+        end,
+        levelExact = function()
+            local xp, mx = UnitXP("player"), UnitXPMax("player")
+            if ns.IsSecret(xp) or ns.IsSecret(mx) or not mx or mx == 0 then return UnitLevel("player") end
+            return UnitLevel("player") + xp / mx
+        end,
+        when = function(cond, arg)
+            local neg = cond:sub(1, 1) == "!"
+            local c = neg and cond:sub(2) or cond
+            local id = tonumber(arg)
+            local r = true
+            if c == "complete" and id then r = C_QuestLog.IsQuestFlaggedCompleted(id) or (C_QuestLog.IsOnQuest(id) and C_QuestLog.IsComplete(id))
+            elseif c == "onquest" and id then r = C_QuestLog.IsOnQuest(id)
+            elseif c == "turnedin" and id then r = C_QuestLog.IsQuestFlaggedCompleted(id)
+            elseif c == "zone" then r = GetZoneText() == arg end
+            if neg then return not r end
+            return r and true or false
+        end,
     }
 end
 
@@ -208,10 +292,25 @@ function Journey:Refresh()
             view.steps[#view.steps + 1] = s
         end
         view.finished = idx > #guide.steps
+        local info = self:PackInfo(mode)
+        if view.finished and info and info.next and HawarysGuides.text[info.next] and not self.chaining then
+            self.chaining = true
+            self:Set("guide", "pack:" .. info.next) -- on to the next zone of the route
+            self.chaining = false
+            return
+        end
+        view.title = self:GuideTitle(mode)
         view.progress = math.min(1, (idx - 1) / math.max(1, #guide.steps))
         view.progressText = L.JOURNEY_PROGRESS_STEP:format(math.min(idx, #guide.steps), #guide.steps)
     else
         local steps = J.AutoSteps(self:Quests(), UnitLevel("player"))
+        -- Smart Route: nearby quests you can pick up (from the quest database)
+        if ns.QuestProvider then
+            for _, q in ipairs(ns.QuestProvider.NearbyAvailable(3)) do
+                steps[#steps + 1] = { type = "accept", questID = q.questID, text = q.name, x = q.x * 100, y = q.y * 100,
+                                      map = q.mapID, auto = true, giver = q.giver }
+            end
+        end
         view.mode, view.title = "auto", L.JOURNEY_AUTO
         view.steps = { steps[1], steps[2], steps[3] }
         view.empty = #steps == 0
@@ -440,6 +539,10 @@ function Journey:OnEnable()
     self:RegisterEvent("GOSSIP_SHOW", "OnGossip")
     self:RegisterEvent("QUEST_GREETING", "OnQuestGreeting")
     C_Timer.After(1, function() ns.Safe(self.Refresh, self) end)
+    if not self.questHook then
+        self.questHook = true
+        ns:On("QUESTS_UPDATED", function() if Journey.enabled then Journey:QueueRefresh() end end)
+    end
     ns:Fire("JOURNEY_ENABLED", true)
 end
 

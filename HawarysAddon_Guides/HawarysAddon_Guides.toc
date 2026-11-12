@@ -1,0 +1,11 @@
+## Interface: 16001
+## Title: |cff38c6f4Hawary's|r Addon – Leveling Guides
+## Notes: 1-60 Alliance and Horde routes and class quests for Hawary's Addon (from Polestar, GPLv3). Loaded only when needed.
+## Author: Hawary
+## Version: 1.0.0
+## LoadOnDemand: 1
+## Dependencies: HawarysAddon
+## IconTexture: Interface\AddOns\HawarysAddon\Media\logo
+## X-License: GPL-3.0-or-later
+
+Guides.lua

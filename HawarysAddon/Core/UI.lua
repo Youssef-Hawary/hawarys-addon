@@ -3,7 +3,7 @@
 local _, ns = ...
 local L, T, W = ns.L, ns.Theme, ns.W
 
-local WIDTH, HEIGHT, SIDEBAR = 840, 560, 196
+local WIDTH, HEIGHT, SIDEBAR = 860, 620, 200
 
 ---------------------------------------------------------------------------
 -- General settings behave like a module so both menus share the same code
@@ -59,8 +59,6 @@ StaticPopupDialogs.HAWARYS_ADDON_RELOAD = {
 
 -- Roadmap entries shown in the sidebar until their modules ship
 ns.roadmap = {
-    { id = "talents", title = L.MOD_TALENTS, desc = L.MOD_TALENTS_DESC },
-    { id = "macrohelp", title = L.MOD_MACROHELP, desc = L.MOD_MACROHELP_DESC },
 }
 
 -- Home dashboard sections, registered by modules: fn(content, width, y) -> newY, refreshFn
@@ -391,24 +389,33 @@ local function BuildWindow()
     sline:SetPoint("BOTTOMLEFT", side, "BOTTOMRIGHT", 0, 14)
     if T.native() then sline:SetAlpha(0.5) end
 
-    local y = -14
+    -- The menu scrolls (mouse wheel or the thin bar) – it holds every module.
+    local sideHolder = CreateFrame("Frame", nil, side)
+    sideHolder:SetPoint("TOPLEFT", 0, -6)
+    sideHolder:SetPoint("BOTTOMRIGHT", 0, 16)
+    local sideScroll = W.ScrollPage(sideHolder, 12)
+    local list = sideScroll.content
+    local y = -8
     local function add(btn)
-        btn:SetPoint("TOPLEFT", side, "TOPLEFT", 10, y)
-        btn:SetPoint("RIGHT", side, "RIGHT", -10, 0)
-        y = y - 32
+        btn:SetPoint("TOPLEFT", list, "TOPLEFT", 8, y)
+        btn:SetPoint("RIGHT", list, "RIGHT", -2, 0)
+        y = y - 31
     end
     local function section(text)
         y = y - 8
-        local fs = W.Label(side, text:upper(), "tag", "text3")
-        fs:SetPoint("TOPLEFT", 22, y)
+        local fs = W.Label(list, text:upper(), "tag", "text3")
+        fs:SetPoint("TOPLEFT", 20, y)
         y = y - 18
     end
-    add(NavButton(side, "home", L.NAV_HOME))
-    add(NavButton(side, "general", L.NAV_GENERAL))
+    add(NavButton(list, "home", L.NAV_HOME))
+    add(NavButton(list, "general", L.NAV_GENERAL))
     section(L.HOME_MODULES)
-    for _, mod in ipairs(ns.moduleOrder) do add(NavButton(side, mod.id, mod.title)) end
-    section(L.NAV_COMING)
-    for _, item in ipairs(ns.roadmap) do add(NavButton(side, item.id, item.title, true)) end
+    for _, mod in ipairs(ns.moduleOrder) do add(NavButton(list, mod.id, mod.title)) end
+    if #ns.roadmap > 0 then
+        section(L.NAV_COMING)
+        for _, item in ipairs(ns.roadmap) do add(NavButton(list, item.id, item.title, true)) end
+    end
+    list:SetHeight(-y + 8)
 
     local area = CreateFrame("Frame", nil, window)
     area:SetPoint("TOPLEFT", side, "TOPRIGHT", 24, -20)

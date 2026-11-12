@@ -16,7 +16,7 @@ local _, ns = ...
 local J = {}
 ns.JourneyData = J
 
-J.TYPES = { accept = true, complete = true, turnin = true, ["goto"] = true, level = true, train = true, hearth = true, fly = true, note = true }
+J.TYPES = { accept = true, complete = true, turnin = true, ["goto"] = true, level = true, train = true, hearth = true, fly = true, note = true, objective = true, getfp = true, vendor = true }
 J.QUEST_TYPES = { accept = true, complete = true, turnin = true }
 J.ARRIVE_YARDS = 12
 
@@ -41,8 +41,20 @@ function J.ParseGuide(text)
         local line = trim(raw)
         if line ~= "" and line:sub(1, 1) ~= "#" then
             local key, value = line:match("^(%a+)%s*:%s*(.*)$")
-            if key and (key == "guide" or key == "level" or key == "map") then
-                if key == "guide" then
+            local word0, after0 = line:match("^(%a+)%s*(.*)$")
+            if word0 == "section" then
+                guide.section = after0
+                key = nil
+            elseif word0 == "tip" then
+                guide.tip = after0
+                key = nil
+            end
+            if not key and (word0 == "section" or word0 == "tip") then
+                -- handled above
+            elseif key and (key == "guide" or key == "level" or key == "map" or key == "id") then
+                if key == "id" then
+                    guide.id = value
+                elseif key == "guide" then
                     guide.name = trim(value)
                 elseif key == "level" then
                     local a, b = value:match("(%d+)%s*%-%s*(%d+)")
@@ -56,8 +68,14 @@ function J.ParseGuide(text)
                 if not word or not J.TYPES[word] then
                     errors[#errors + 1] = ("line %d: unknown step '%s'"):format(n, word or line)
                 else
-                    local step = { type = word, line = n }
-                    rest, step.x, step.y, step.map = extractCoords(rest or "")
+                    local step = { type = word, line = n, section = guide.section, tip = guide.tip }
+                    guide.tip = nil
+                    rest = rest or ""
+                    local wcond, warg
+                    rest = rest:gsub("%s+when%s+(!?%a+)%s*(.-)%s*$", function(c, a) wcond, warg = c, a; return "" end)
+                    if wcond then step.when = { wcond, (warg:gsub('"', '')) } end
+                    rest = rest:gsub("%s+only%s+(!?[%a,!]+)%s*$", function(o) step.only = o; return "" end)
+                    rest, step.x, step.y, step.map = extractCoords(rest)
                     if J.QUEST_TYPES[word] then
                         local id, title = rest:match("^(%d+)%s*(.*)$")
                         if not id then
@@ -77,8 +95,16 @@ function J.ParseGuide(text)
                             errors[#errors + 1] = ("line %d: 'goto' needs coordinates"):format(n)
                             step = nil
                         end
+                    elseif word == "objective" then
+                        local q, o, verb = rest:match("^(%d+)%.(%d+)%s*(.*)$")
+                        if not q then
+                            errors[#errors + 1] = ("line %d: 'objective' needs quest.index"):format(n)
+                            step = nil
+                        else
+                            step.questID, step.obj, step.text = tonumber(q), tonumber(o), trim(verb)
+                        end
                     elseif word == "level" then
-                        local lvl, label = rest:match("^(%d+)%s*(.*)$")
+                        local lvl, label = rest:match("^([%d%.]+)%s*(.*)$")
                         if not lvl then
                             errors[#errors + 1] = ("line %d: 'level' needs a number"):format(n)
                             step = nil
@@ -106,9 +132,43 @@ function J.ParseGuide(text)
 end
 
 -- ctx: { onQuest(id), flagged(id), complete(id), level(), distance(step) -> yards|nil, manual(step) -> bool }
+-- only = "Orc,Troll" / "Orc,Warrior" / "!Warlock" / "NightElf,Skyborne,Alliance"
+-- Races, classes and factions are each "any of"; groups must all match; "!" excludes.
+J.CLASSES = { WARRIOR = true, PALADIN = true, HUNTER = true, ROGUE = true, PRIEST = true, SHAMAN = true, MAGE = true, WARLOCK = true, DRUID = true }
+J.FACTIONS = { ALLIANCE = true, HORDE = true }
+local RACE_ALIAS = { UNDEAD = "SCOURGE" }
+function J.Matches(only, who)
+    if not only or not who then return true end
+    local groups = {}
+    for token in only:gmatch("[^,]+") do
+        local neg = token:sub(1, 1) == "!"
+        local name = (neg and token:sub(2) or token):upper()
+        name = RACE_ALIAS[name] or name
+        local kind = J.CLASSES[name] and "class" or (J.FACTIONS[name] and "faction" or "race")
+        local mine = (who[kind] or ""):upper()
+        mine = RACE_ALIAS[mine] or mine
+        if neg then
+            if mine == name then return false end
+        else
+            groups[kind] = groups[kind] or false
+            if mine == name then groups[kind] = true end
+        end
+    end
+    for _, ok in pairs(groups) do if not ok then return false end end
+    return true
+end
+
 function J.IsDone(step, ctx)
+    if step.only and not J.Matches(step.only, ctx.who) then return true end -- not for you: skip
+    if step.when and ctx.when and not ctx.when(step.when[1], step.when[2]) then return true end
     if ctx.manual and ctx.manual(step) then return true end
     local t, id = step.type, step.questID
+    if t == "objective" then
+        if ctx.flagged(id) then return true end
+        if not ctx.onQuest(id) then return true end -- not on that quest: nothing to do here
+        if ctx.complete(id) then return true end
+        return ctx.objectiveDone and ctx.objectiveDone(id, step.obj) or false
+    end
     if t == "accept" then
         return ctx.onQuest(id) or ctx.flagged(id)
     elseif t == "complete" then
@@ -116,7 +176,7 @@ function J.IsDone(step, ctx)
     elseif t == "turnin" then
         return ctx.flagged(id)
     elseif t == "level" then
-        return ctx.level() >= step.level
+        return (ctx.levelExact and ctx.levelExact() or ctx.level()) >= step.level
     elseif t == "goto" then
         local d = ctx.distance and ctx.distance(step)
         return d ~= nil and d <= J.ARRIVE_YARDS

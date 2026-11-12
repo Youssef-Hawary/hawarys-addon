@@ -414,14 +414,24 @@ end
 ---------------------------------------------------------------------------
 -- Scrolling page
 ---------------------------------------------------------------------------
-function W.ScrollPage(parent)
+function W.ScrollPage(parent, rightInset)
     local scroll = CreateFrame("ScrollFrame", nil, parent, "ScrollFrameTemplate")
     scroll:SetPoint("TOPLEFT", 0, 0)
-    scroll:SetPoint("BOTTOMRIGHT", -18, 0)
+    scroll:SetPoint("BOTTOMRIGHT", -(rightInset or 18), 0)
     local content = CreateFrame("Frame", nil, scroll)
     content:SetSize(10, 10)
     scroll:SetScrollChild(content)
     scroll:SetScript("OnSizeChanged", function(_, w) content:SetWidth(w) end)
+    -- Our own wheel handler: works over every child (cards, rows, buttons) and doesn't
+    -- depend on the scroll bar being ready.
+    scroll:EnableMouseWheel(true)
+    scroll:SetScript("OnMouseWheel", function(self, delta)
+        local range = self:GetVerticalScrollRange()
+        if range <= 0 then return end
+        local new = self:GetVerticalScroll() - delta * 48
+        if new < 0 then new = 0 elseif new > range then new = range end
+        self:SetVerticalScroll(new)
+    end)
     scroll.content = content
     return scroll
 end

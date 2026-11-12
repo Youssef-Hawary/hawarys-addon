@@ -1,12 +1,13 @@
 ## Interface: 16001
 ## Title: |cff38c6f4Hawary's|r Addon
-## Notes: All-in-one for WoW Forever: gear upgrades, best quest reward, item counts across characters, quality of life. Type /ha
+## Notes: All-in-one for WoW Forever: quest database and map pins, step guide with arrow, gear upgrades, bags, professions, auction prices, dungeons, discoveries, trainer and macro helper. Type /ha
 ## Author: Hawary
-## Version: 0.4.0
+## Version: 1.0.0
 ## IconTexture: Interface\AddOns\HawarysAddon\Media\logo
 ## AddonCompartmentFunc: HawarysAddon_OnAddonCompartmentClick
 ## AddonCompartmentFuncOnEnter: HawarysAddon_OnAddonCompartmentEnter
 ## AddonCompartmentFuncOnLeave: HawarysAddon_OnAddonCompartmentLeave
+## OptionalDeps: QuestieDB
 ## SavedVariables: HawarysAddonDB
 ## SavedVariablesPerCharacter: HawarysAddonCharDB
 ## X-License: GPL-3.0-or-later
@@ -19,6 +20,8 @@ Core\Init.lua
 Core\Theme.lua
 Core\UI.lua
 
+Modules\QuestLogic.lua
+Modules\Quests.lua
 Modules\JourneyData.lua
 Modules\Journey.lua
 Modules\JourneyUI.lua
@@ -35,3 +38,4 @@ Modules\Dungeons.lua
 Modules\Discovery.lua
 Modules\Discovery.xml
 Modules\Adventure.lua
+Modules\Helpers.lua

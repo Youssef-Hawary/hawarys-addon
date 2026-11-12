@@ -327,6 +327,58 @@ test("diary: gold milestones and trimming", function()
     eq(table.concat(l, ","), "3,4,5")
 end)
 
+loadInto(ns, "Modules/QuestLogic.lua")
+local QL = ns.QuestLogic
+
+test("quest availability: level, race/class masks, chains, exclusive, grey", function()
+    local ctx = { level = 20, raceID = 2, classID = 1, completed = { [5] = true }, active = { [7] = true }, greyDiff = 7 }
+    local function row(t) return t end
+    eq(QL.Status(row({ [4] = 18, [5] = 20 }), 1, ctx), "available")
+    eq(QL.Status(row({ [4] = 22, [5] = 22 }), 1, ctx), "low", "two levels too low")
+    eq(QL.Status(row({ [4] = 25 }), 1, ctx), nil, "far too high")
+    eq(QL.Status(row({ [4] = 5, [5] = 6 }), 1, ctx), "trivial")
+    eq(QL.Status(row({ [4] = 18, [6] = 1 }), 1, ctx), nil, "race 2 not in mask 1")
+    eq(QL.Status(row({ [4] = 18, [6] = 2 }), 1, ctx), "available")
+    eq(QL.Status(row({ [4] = 18, [7] = 4 }), 1, ctx), nil, "class mask")
+    eq(QL.Status(row({ [4] = 18, [13] = { 9, 5 } }), 1, ctx), "available", "one of the prereqs done")
+    eq(QL.Status(row({ [4] = 18, [12] = { 5, 9 } }), 1, ctx), nil, "all prereqs needed")
+    eq(QL.Status(row({ [4] = 18, [16] = { 7 } }), 1, ctx), nil, "exclusive with an active quest")
+    eq(QL.Status(row({ [4] = 18 }), 5, ctx), nil, "already done")
+    eq(QL.Status(row({ [4] = 18, [18] = { 186, 50 } }), 1, ctx), nil, "needs a profession skill")
+    ctx.skill = function() return 75 end
+    eq(QL.Status(row({ [4] = 18, [18] = { 186, 50 } }), 1, ctx), "available")
+    truthy(QL.FriendlyTo("AH", "Horde")); truthy(not QL.FriendlyTo("A", "Horde")); truthy(QL.FriendlyTo(nil, "Horde"))
+end)
+
+test("quest objectives: mobs, objects, item drops, explore, hidden", function()
+    local data = {
+        npc = { [10] = { spawns = { [12] = { { 40, 40 } } } } },
+        object = { [20] = { spawns = { [12] = { { 30, 30 } } } } },
+        item = { [30] = { npcDrops = { 10 }, objectDrops = { 20 } } },
+    }
+    local get = function(e, id, f) return data[e][id] and data[e][id][f] end
+    local quest = { [10] = { { { 10, "Wolf" } }, { { 20 } }, { { 30 } } }, [9] = { "Scout the hill", { [12] = { { 60, 60 } } } },
+                    [29] = { { { [12] = { { 70, 70 } } }, 1, "Secret egg", 1 } } }
+    local src = QL.ObjectiveSources(quest, get)
+    local kinds = {}
+    for _, s in ipairs(src) do kinds[#kinds + 1] = s.kind end
+    eq(table.concat(kinds, ","), "npc,object,item_npc,item_object,explore,secret")
+    local pts = QL.SpawnsOnMap({ [12] = { { 50, 25 } }, [99] = { { 1, 1 } } }, function(a) return a == 12 and 1429 or 2 end, 1429)
+    eq(#pts, 1); eq(pts[1][1], 0.5); eq(pts[1][2], 0.25)
+end)
+
+test("minimap math", function()
+    local x, y, d = QL.MinimapOffset(0, 0, 10, 0, 100, 50, false)
+    eq(math.floor(x + 0.5), 0); eq(math.floor(y + 0.5), 5); eq(d, 10) -- north is up
+    x, y = QL.MinimapOffset(0, 0, 0, 10, 100, 50, false)
+    eq(math.floor(x + 0.5), -5); eq(math.floor(y + 0.5), 0) -- west is left
+    x, y = QL.MinimapOffset(0, 0, 0, 10, 100, 50, true, math.pi / 2) -- facing west: west is up
+    eq(math.floor(x + 0.5), 0); eq(math.floor(y + 0.5), 5)
+    eq(QL.MinimapOffset(0, 0, 500, 0, 100, 50, false), nil, "outside the radius")
+    local wx, wy = QL.ToWorld({ 100, 200, 0, 0 }, 0.5, 0.25)
+    eq(wx, 75); eq(wy, 100)
+end)
+
 ---------------------------------------------------------------------------
 -- Part 2: smoke test with a mocked WoW API
 ---------------------------------------------------------------------------
@@ -538,6 +590,49 @@ env.WorldMapFrame.ScrollContainer = newFrame()
 env.WorldMapFrame.AddDataProvider = record("addprovider")
 env.WorldMapFrame.IsShown = function() return false end
 env.C_Map.GetMapInfo = function() return { name = "Test Valley" } end
+-- Quest database (tiny fake copy in the same shape as the bundled data)
+env.HawarysQuestData = {
+    quest = [[return {
+        [500] = { "Wolf Trouble", { { 1 } }, { { 2 } }, 18, 20, 0, 0, { "Kill wolves" }, nil, { { { 10, "Wolf" } }, nil, { { 30 } } } },
+        [501] = { "Next Step", { { 1 } }, { { 2 } }, 18, 20, 0, 0, nil, nil, {}, nil, nil, { 500 } },
+        [101] = { "Wolves", { { 1 } }, { { 2 } }, 1, 3, 0, 0, nil, nil, { { { 10 } }, { { 20 } } }, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, { { { [12] = { { 70, 70 } } }, 1, "Secret egg", 1 } } },
+    }]],
+    npc = [[return {
+        [1] = { "Ranger Giver", 0, 0, 20, 20, 0, { [12] = { { 41, 41 } } }, nil, 12, { 500 }, nil, 0, "AH" },
+        [2] = { "Turnin Guy", 0, 0, 20, 20, 0, { [12] = { { 45, 45 } } }, nil, 12, nil, { 500 }, 0, "AH" },
+        [10] = { "Wolf", 0, 0, 5, 6, 0, { [12] = { { 30, 30 }, { 31, 31 } } }, nil, 12 },
+    }]],
+    object = [[return { [20] = { "Strange Egg", nil, nil, { [12] = { { 35, 35 } } }, 12 } }]],
+    item = [[return { [30] = { "Wolf Pelt", { 10 } } }]],
+    areaToUiMap = [[return { [12] = 1429 }]],
+    areaToUiMapOverride = [[return {}]],
+    info = { built = "test" },
+}
+env.C_AddOns.DoesAddOnExist = function() return false end
+env.C_AddOns.LoadAddOn = function() end
+env.C_QuestLog.GetAllCompletedQuestIDs = function() return {} end
+env.UnitRace = function() return "Orc", "Orc", 2 end
+env.UnitIsPlayer = function() return false end
+env.C_SkillInfo = { GetSkillLineInfoByID = function() return nil end }
+env.IsIndoors = function() return false end
+env.C_CVar.GetCVar = function() return nil end
+env.Minimap.GetZoom = function() return 0 end
+env.Enum.TooltipDataType.Unit = 2
+env.Enum.TooltipDataType.Object = 4
+-- trainer + macros + spellbook
+env.GetNumTrainerServices = function() return 3 end
+env.GetTrainerServiceInfo = function(i)
+    if i == 1 then return "Heroic Strike", "available", 1, 20, "Rank 3" end
+    if i == 2 then return "Cleave", "unavailable", 1, 22, "Rank 2" end
+    return "Charge", "used", 1, 4, "" end
+env.GetTrainerServiceCost = function(i) return i * 1000, false end
+env.C_Trainer = { GetTrainerType = function() return 0 end }
+env.GetNumMacros = function() return 0, 3 end
+env.CreateMacro = record("createmacro")
+env.C_SpellBook = { GetNumSpellBookSkillLines = function() return 1 end,
+    GetSpellBookSkillLineInfo = function() return { itemIndexOffset = 0, numSpellBookItems = 2 } end,
+    GetSpellBookItemName = function(i) return i == 1 and "Heroic Strike" or "Battle Shout" end,
+    IsSpellBookItemPassive = function() return false end }
 env.C_TradeSkillUI = {
     IsNPCCrafting = function() return false end,
     GetBaseProfessionInfo = function() return { professionName = "Mining" } end,
@@ -692,7 +787,7 @@ end)
 test("smoke: dungeons planner + log, discovery, what now, diary", function()
     local Dg, Ds, Nw, Dy = A.modules.dungeons, A.modules.discovery, A.modules.whatnow, A.modules.diary
     truthy(Dg:IsEnabled() and Ds:IsEnabled() and Nw:IsEnabled() and Dy:IsEnabled(), "phase 4 modules enabled")
-    eq(calls.addprovider, 1, "map layer registered with Blizzard's data provider")
+    eq(calls.addprovider, 2, "quests + discovery map layers registered with Blizzard's data provider")
     local acts = Dg:Activities()
     eq(#acts, 2, "PvP activity skipped")
     eq(Dg:Suggestion().name, "Hawarys Hold") -- player is level 20
@@ -741,12 +836,77 @@ test("smoke: dungeons planner + log, discovery, what now, diary", function()
     for _, page in ipairs({ "home", "dungeons", "discovery", "whatnow", "diary" }) do A:OpenWindow(page) end
 end)
 
+test("smoke: quest database, pins, tooltips index, smart route, trainer, macros", function()
+    local Qm = A.modules.quests
+    truthy(Qm:IsEnabled(), "quests enabled")
+    Qm:Rebuild()
+    eq(Qm.source, "bundled")
+    eq(Qm.available[500], "available")
+    eq(Qm.available[501], nil, "needs quest 500 first")
+    local pins = Qm:PinsFor(1429)
+    local kinds = {}
+    for _, p in ipairs(pins) do kinds[p.kind] = (kinds[p.kind] or 0) + 1 end
+    truthy(kinds.available, "quest giver pin")
+    truthy(kinds.npc and kinds.object and kinds.secret, "objective pins incl. hidden egg for active quest 101")
+    truthy(Qm.tipByName["Wolf"], "wolf tooltip lines")
+    truthy(Qm.tipByName["Ranger Giver"], "giver tooltip line")
+    local near = ns and nil
+    local nearby = A.QuestProvider.NearbyAvailable(3)
+    eq(#nearby, 1); eq(nearby[1].questID, 500)
+    truthy(A.QuestProvider.NearestFor(101), "nearest objective spot for an active quest")
+    Qm:UpdateMinimap()
+    -- journey picks the quest pickup into Auto Journey
+    local Jm = A.modules.journey
+    Jm:Refresh()
+    local hasPickup = false
+    for _, s in ipairs(Jm.view.steps) do if s.type == "accept" and s.questID == 500 then hasPickup = true end end
+    truthy(hasPickup or #Jm.view.steps == 3, "smart route adds the pickup when there's room")
+
+    local Tr, Mc = A.modules.training, A.modules.macros
+    fire("TRAINER_SHOW")
+    local now, byLevel, cost, levels = Tr:Plan()
+    eq(#now, 1); eq(cost, 1000); eq(levels[1], 22)
+    local body, n = Mc.Build(Mc.templates[1].text, "Flash Heal")
+    truthy(body:find("@mouseover", 1, true) and body:find("Flash Heal", 1, true)); truthy(n < 255)
+    eq(#Mc:Spells(), 2)
+    Mc:Create("Heal", body)
+    eq(calls.createmacro, 1)
+    Mc:Create("", body)
+    eq(calls.createmacro, 1, "needs a name")
+    for _, page in ipairs({ "quests", "training", "macros", "home" }) do A:OpenWindow(page) end
+end)
+
+test("routes: race/class rules, sections/tips, start where you are, chain to next zone", function()
+    eq(JD.Matches("Orc,Warrior", { race = "Orc", class = "WARRIOR" }), true)
+    eq(JD.Matches("Orc,Warrior", { race = "Troll", class = "WARRIOR" }), false)
+    eq(JD.Matches("!Warlock", { class = "WARLOCK" }), false)
+    eq(JD.Matches("Undead", { race = "Scourge" }), true)
+    local g = JD.ParseGuide("guide: T\nid: t/1\nsection Camp\ntip Look left\naccept 9 only Mage\nobjective 9.2 kill when onquest 9\nlevel 5.5")
+    eq(#g.steps, 3); eq(g.steps[1].section, "Camp"); eq(g.steps[1].tip, "Look left"); eq(g.steps[1].only, "Mage")
+    eq(g.steps[2].type, "objective"); eq(g.steps[2].obj, 2); eq(g.steps[2].when[1], "onquest"); eq(g.steps[3].level, 5.5)
+
+    env.HawarysGuides = { list = {
+        { id = "f/horde/orc/01-start", title = "Start", faction = "Horde", race = "Orc", levels = "1-10", next = "f/horde/02-next" },
+        { id = "f/horde/02-next", title = "Next", faction = "Horde", levels = "10-20" },
+    }, text = {
+        ["f/horde/orc/01-start"] = "guide: Start\nid: f/horde/orc/01-start\naccept 101\naccept 102",
+        ["f/horde/02-next"] = "guide: Next\nid: f/horde/02-next\naccept 700\nturnin 700",
+    } }
+    local Jm = A.modules.journey
+    Jm.packIndex = nil
+    Jm:StartRoute("Horde", "Orc", "WARRIOR")
+    eq(Jm:Get("guide"), "pack:f/horde/02-next", "quests 101/102 are already in the log, so the route starts at the next zone")
+    eq(Jm.view.index, 1); eq(Jm.current.questID, 700)
+    A:OpenWindow("journey")
+    Jm:Set("guide", "auto")
+end)
+
 test("smoke: native theme builds too", function()
     env.HawarysAddonDB.general.theme = "native"
     local B = loadTOC()
     fire("ADDON_LOADED", "HawarysAddon")
     fire("PLAYER_LOGIN")
-    for _, page in ipairs({ "home", "general", "journey", "gear", "bags", "qol", "market", "professions", "alts", "dungeons", "discovery", "whatnow", "diary" }) do B:OpenWindow(page) end
+    for _, page in ipairs({ "home", "general", "journey", "gear", "bags", "qol", "market", "professions", "alts", "dungeons", "discovery", "whatnow", "diary", "quests", "training", "macros" }) do B:OpenWindow(page) end
 end)
 
 print(string.format("\n%d passed, %d failed", passed, failed))

@@ -5,13 +5,17 @@
 **One addon for World of Warcraft: Forever** that brings together what the most popular addons do, with one clean Hawary look and one settings window.
 
 - **Game:** World of Warcraft: Forever, client 1.60.1, `## Interface: 16001`
-- **Version:** 0.4.0 (Phase 4: Dungeons, Discovery, What now?, Journey Diary)
+- **Version:** 1.0.0
 - **License:** GPL-3.0-or-later. Free forever, code fully visible, as Blizzard's add-on policy requires.
 
 ## What's in it
 
 | Module | Like | What it does |
 |---|---|---|
+| **Leveling routes 1-60** | Zygor, RestedXP, Polestar | Pick **Alliance or Horde, your race and class** and press *Start my route*. 146 step-by-step guides (every race's start zone, then 30-40 / 40-50 / 50-60, plus class quests) with **11,433 steps**. Steps you already did are **skipped**, race/class-only steps only show for you, and the next zone loads by itself. |
+| **Quests** | Questie | **4,244 quests, 10,119 NPCs, 6,645 objects, 14,889 items** for WoW Forever. Quest givers (!), turn-ins (?) and **every objective spot** (mobs, eggs, crates, drops, places) and **hidden objectives** on your world map and minimap; quest lines in mob/object/item tooltips; prerequisite chains respected. Uses an installed QuestieDB if you have it. |
+| **Trainer Planner** | What's Training | What you can learn now and at the next levels, with the gold you'll need. |
+| **Macro Helper** | (new) | A **macro generator**: template + spell → preview → *Create macro*. Normal Blizzard macros only. |
 | **Journey & Guide** | Zygor, RestedXP, Questie, NAG Journey, Overwolf stats | A floating **step-by-step guide window** with the current step, its objectives and the next steps. A big **direction arrow** with distance. **Blizzard's own map pin and in-world marker** for the current step. **Auto Journey** builds your route from your own quest log (finished quests first, then the nearest objectives). **Import step guides** ([format](docs/GUIDE-FORMAT.md)). **Session stats** (XP/hour, time to level). Level-up notice. Optional quest automation: off by default, Shift pauses it, never in combat. |
 | **Gear & Upgrades** | Pawn, GearQuest, NAG Journey | Stat weights for your class and spec. Tooltip shows `+12% upgrade` or `-5% vs equipped`, plus the exact item level and item ID. Green arrows on upgrades in your bags. **Marks the best quest reward** (your biggest upgrade, or what sells for the most) and can pre-select it. You still click Complete. Notices when you loot an upgrade. |
 | **Bags** | Baganator, Altoholic | Remembers every character's bags, bank and gear. Item tooltips show who has how many (bags / bank / worn). Total gold across characters on the Home page. |
@@ -48,7 +52,7 @@ Hawary's Addon follows [Blizzard's UI Add-On Development Policy](https://us.foru
 ## Install
 
 1. Download this repository (green **Code** button → **Download ZIP**), or grab a release.
-2. Copy the **`HawarysAddon`** folder into
+2. Copy the **three** folders **`HawarysAddon`**, **`HawarysAddon_QuestData`** and **`HawarysAddon_Guides`** into
    `World of Warcraft\_forever_\Interface\AddOns\`
 3. Start the game (or `/reload`). Make sure **Hawary's Addon** is ticked in the AddOns list.
 
@@ -90,6 +94,9 @@ python3 tools/make_brand.py   # rebuild logo, textures, font and banner
 APIs were checked against Blizzard's Forever UI source (`Gethe/wow-ui-source`, branch `forever`, build 1.60.1.70888) and the Forever API reference for build 1.60.1.70755. See [docs/API-NOTES.md](docs/API-NOTES.md).
 
 ## Credits
+
+- **Leveling routes** converted from [Polestar](https://github.com/fitzforge/polestar) (GPLv3, © The Polestar authors) – see `HawarysAddon_Guides/CREDITS.md`.
+- **Quest data** from [QuestieDB](https://github.com/Questie/QuestieDB) (copying under GPLv3 allowed by the Questie team) – see `HawarysAddon_QuestData/CREDITS.md`. Not affiliated with Questie or Polestar.
 
 - Chakra Petch font: SIL Open Font License (`HawarysAddon/Media/OFL-ChakraPetch.txt`).
 - Feature ideas from the addons listed above. No code was copied from them.
