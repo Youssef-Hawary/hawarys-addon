@@ -1,0 +1,25 @@
+## Interface: 16001
+## Title: |cff38c6f4Hawary's|r Addon
+## Notes: All-in-one for WoW Forever: gear upgrades, best quest reward, item counts across characters, quality of life. Type /ha
+## Author: Hawary
+## Version: 0.1.0
+## IconTexture: Interface\AddOns\HawarysAddon\Media\logo
+## AddonCompartmentFunc: HawarysAddon_OnAddonCompartmentClick
+## AddonCompartmentFuncOnEnter: HawarysAddon_OnAddonCompartmentEnter
+## AddonCompartmentFuncOnLeave: HawarysAddon_OnAddonCompartmentLeave
+## SavedVariables: HawarysAddonDB
+## SavedVariablesPerCharacter: HawarysAddonCharDB
+## X-License: GPL-3.0-or-later
+## X-Website: https://github.com/Youssef-Hawary/hawarys-addon
+
+Locales\enUS.lua
+
+Core\Util.lua
+Core\Init.lua
+Core\Theme.lua
+Core\UI.lua
+
+Modules\GearData.lua
+Modules\Gear.lua
+Modules\Bags.lua
+Modules\QoL.lua
