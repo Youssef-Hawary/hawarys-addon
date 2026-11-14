@@ -5,7 +5,7 @@
 **One addon for World of Warcraft: Forever** that brings together what the most popular addons do, with one clean Hawary look and one settings window.
 
 - **Game:** World of Warcraft: Forever, client 1.60.1, `## Interface: 16001`
-- **Version:** 1.2.0 (12 new features, a **For Fun** category with 10 fun extras, Arabic, controller support)
+- **Version:** 1.3.0 (Pawn scales, a Bagnon-style bag window, a DPS meter, Auction House+ and Map+)
 - **License:** GPL-3.0-or-later. Free forever, code fully visible, as Blizzard's add-on policy requires.
 
 ## What's in it
@@ -27,6 +27,18 @@
 | **What now?** | (new) | A Home card and `/ha now` with your best next move: repair, full bags, an upgrade to equip, turn-ins, trainer, a dungeon for your level, shopping list, rested XP. Click to open the right page. |
 | **Journey Diary** | Overwolf clips, Journey Forever | A **timeline** of your road to 60 (levels, dungeon clears, epics, rares, gold and quest milestones) with **optional screenshots**. |
 | **Quality of Life** | Leatrix Plus, Leatrix Maps, BlizzMove | Auto repair (guild funds optional), sell junk, instant loot, accept invites from friends & guild, decline duels, max camera distance, coordinates on the minimap and world map, drag Blizzard windows. |
+
+### New in 1.3.0
+
+Features like five favourite CurseForge addons, written from scratch for Forever:
+
+| Like | In Hawary's Addon | What you get |
+|---|---|---|
+| Pawn | Gear & Upgrades | Import/export Pawn scale strings, upgrade arrows and % in tooltips, optional score number |
+| Bagnon | Bag Window (`/ha inv`) | One window for all bags, search, sort, item levels, upgrade arrows, junk coins, every character's bags and bank offline |
+| Details! / Skada | DPS Meter (`/ha dps`) | Damage, DPS, healing, interrupts, deaths and more, earlier fights, a spell breakdown, Report. Built on Blizzard's own meter data. |
+| Auctionator | Auction House+ | Shopping lists, history, crafting needs; sell with undercut + price floor; cancel undercut auctions. Each action is one click. |
+| OpenMap / Leatrix Maps | Map+ | Movable, resizable world map that fades while you run, zone search, Find me, minimap wheel zoom (steps aside if OpenMap is installed) |
 
 ### New in 1.2.0
 
@@ -92,6 +104,8 @@ Hawary's Addon follows [Blizzard's UI Add-On Development Policy](https://us.foru
 | `/ha options` | Blizzard's options menu for the addon |
 | `/ha journey` · `/ha gear` · `/ha bags` · `/ha qol` · `/ha general` | open a page |
 | `/ha tracker` | show or hide the quest tracker |
+| `/ha dps` | show or hide the DPS meter |
+| `/ha inv` | open the bag window |
 | `/ha fly` | map pin to the nearest flight master you know |
 | `/ha bis` | best-in-slot finder |
 | `/ha fortune` | today's fortune |

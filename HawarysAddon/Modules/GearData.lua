@@ -92,11 +92,65 @@ D.profiles = P
 D.GENERIC = { id = "GENERIC", label = "Balanced", role = "DAMAGER",
     w = { STR = 1.0, AGI = 1.0, INT = 1.0, STA = 0.5, SPI = 0.3, CRIT = 0.6, HASTE = 0.6, MASTERY = 0.5, VERS = 0.5, HIT = 0.6, AP = 0.4, SP = 0.6, DPS = 2.0, ARMOR = 0.01 } }
 
+-- Your own weight sets (Pawn-style scales). Filled from saved settings by the Gear module:
+-- id -> { id, label, role, w = { SHORT = weight } }
+D.custom = {}
+
 function D.FindProfile(id)
+    if id and D.custom[id] then return D.custom[id] end
     for _, list in pairs(P) do
         for _, p in ipairs(list) do if p.id == id then return p end end
     end
     if id == D.GENERIC.id then return D.GENERIC end
+end
+
+---------------------------------------------------------------------------
+-- Pawn scale strings:  ( Pawn: v1: "Name": Strength=1.00, Stamina=0.50, CritRating=0.80 )
+---------------------------------------------------------------------------
+-- Pawn stat name -> our short stat key
+D.PAWN = {
+    Strength = "STR", Agility = "AGI", Stamina = "STA", Intellect = "INT", Spirit = "SPI",
+    CritRating = "CRIT", HasteRating = "HASTE", MasteryRating = "MASTERY", Versatility = "VERS",
+    HitRating = "HIT", Ap = "AP", SpellPower = "SP", Healing = "HEAL", Mp5 = "MP5",
+    DefenseRating = "DEF", DodgeRating = "DODGE", ParryRating = "PARRY", BlockRating = "BLOCK",
+    Armor = "ARMOR", Dps = "DPS", MeleeDps = "DPS", RangedDps = "DPS",
+}
+local PAWN_OUT = {}
+for name, short in pairs(D.PAWN) do
+    if not PAWN_OUT[short] or #name < #PAWN_OUT[short] then PAWN_OUT[short] = name end
+end
+PAWN_OUT.DPS = "Dps"
+
+-- Pure: parse one Pawn scale string. Returns { label, w } or nil, reason. Unit-tested.
+function D.ParsePawnScale(text)
+    if type(text) ~= "string" then return nil, "empty" end
+    local name, body = text:match('%(%s*Pawn%s*:%s*v%d+%s*:%s*"([^"]*)"%s*:%s*(.-)%s*%)')
+    if not name then return nil, "not a Pawn scale" end
+    local w, n = {}, 0
+    for key, value in body:gmatch("([%a]+)%s*=%s*(%-?[%d%.]+)") do
+        local short = D.PAWN[key]
+        local num = tonumber(value)
+        if short and num and num ~= 0 then
+            -- MeleeDps and RangedDps both map to DPS: keep the bigger one
+            if not w[short] or math.abs(num) > math.abs(w[short]) then w[short] = num end
+        end
+    end
+    for _ in pairs(w) do n = n + 1 end
+    if n == 0 then return nil, "no stats we know" end
+    name = name:gsub("^%s+", ""):gsub("%s+$", "")
+    if name == "" then name = "Pawn scale" end
+    return { label = name, w = w }
+end
+
+-- Pure: weights -> Pawn scale string (stats sorted so the output is stable). Unit-tested.
+function D.ExportPawnScale(label, w)
+    local keys = {}
+    for short in pairs(w or {}) do if PAWN_OUT[short] then keys[#keys + 1] = short end end
+    table.sort(keys, function(a, b) return PAWN_OUT[a] < PAWN_OUT[b] end)
+    local parts = {}
+    for _, short in ipairs(keys) do parts[#parts + 1] = string.format("%s=%.2f", PAWN_OUT[short], w[short]) end
+    local safe = (label or "Hawary"):gsub('"', "'")
+    return string.format('( Pawn: v1: "%s": %s )', safe, table.concat(parts, ", "))
 end
 
 -- override: profile id or "auto"; role / primaryStatIndex come from the active spec (may be nil)

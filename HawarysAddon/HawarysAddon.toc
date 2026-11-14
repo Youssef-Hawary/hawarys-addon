@@ -1,8 +1,8 @@
 ## Interface: 16001
 ## Title: |cff38c6f4Hawary's|r Addon
-## Notes: All-in-one for WoW Forever: quest database and map pins, step guide with arrow, gear upgrades, bags, professions, auction prices, dungeons, discoveries, trainer and macro helper. Type /ha
+## Notes: All-in-one for WoW Forever: quest database and map pins, step guide with arrow, gear upgrades (Pawn scales), bag window, DPS meter, auction house buying and selling, world map extras, professions, auction prices, dungeons, discoveries, trainer and macro helper. Type /ha
 ## Author: Hawary
-## Version: 1.2.0
+## Version: 1.3.0
 ## IconTexture: Interface\AddOns\HawarysAddon\Media\logo
 ## AddonCompartmentFunc: HawarysAddon_OnAddonCompartmentClick
 ## AddonCompartmentFuncOnEnter: HawarysAddon_OnAddonCompartmentEnter
@@ -49,3 +49,7 @@ Modules\Travel.lua
 Modules\ButtonBag.lua
 Modules\Profiles.lua
 Modules\Fun.lua
+Modules\Meter.lua
+Modules\BagWindow.lua
+Modules\AuctionPlus.lua
+Modules\MapPlus.lua

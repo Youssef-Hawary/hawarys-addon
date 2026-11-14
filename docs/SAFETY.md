@@ -28,7 +28,7 @@ Researched 2026-11-12. Hawary's Addon must never contain anything that could get
 | Feature | Decision | Why |
 |---|---|---|
 | GSE-style sequence macros (each press casts the next spell) | **Removed** (2026-11-12) | No official Blizzard ruling. Forum opinions conflict and some players report bans. It sits on the "no combat automation" line. Blizzard ships its own One-Button Rotation and Assisted Highlight instead. Replaced on the roadmap by a **Macro Helper** that only edits normal Blizzard macros. |
-| Damage meter / combat-log boss mods / WeakAuras-style combat math | Not built | The combat log is closed to addons in Forever, and Blizzard has its own meter, cooldown manager and boss warnings. |
+| Combat-log boss mods / WeakAuras-style combat math | Not built | The combat log is closed to addons in Forever, and Blizzard has its own cooldown manager and boss warnings. (The DPS Meter added in 1.3.0 does **not** read the combat log: see below.) |
 | Anything that sends chat or whispers to other players automatically | Not built | Policy rule 3 (spam), plus chat lockdown in instances. |
 | In-game ads for Hawary's store, services or socials | Never | Policy rule 4. |
 
@@ -79,3 +79,16 @@ Layer detection (Blizzard obfuscated GUIDs to stop it), skin changers or model s
 3. Does it send anything to other players or to chat channels? → Only if the player clicks to send it, and never automatically.
 4. Does it show a shop, service, social link or donation request? → **Never.**
 5. Does it use only APIs listed in the Forever API reference or used by Blizzard's own UI? → `python3 tools/check.py` must pass.
+
+- **1.3.0 additions** (Pawn, Bagnon, Auctionator, Details!/Skada and OpenMap-style features, written from scratch; their code is not copied):
+  - **DPS Meter** shows only **Blizzard's own damage meter data** (`C_DamageMeter`, the numbers the built-in meter shows). It never reads the combat log and never decides anything. In combat those numbers are secret, so the code only passes them to the game's own text and bar functions and never compares them or does math on them. Spell breakdowns and **Report** work only out of combat. Report posts the top 5 to your group (or /say) **only when you click it**.
+  - **Auction House+** buys, posts and cancels **only when you click**, one action per click, exactly like Auctionator, which Blizzard allows:
+    - A commodity purchase takes two clicks: the first asks the server for the price, the second confirms.
+    - An item purchase takes two clicks: select the auction, then confirm.
+    - Searches run one at a time, the throttle Blizzard sets.
+    - It never loops, never auto-buys and never reposts by itself.
+    - A price floor (the vendor price and a percent of the market price) stops posts that are too cheap by mistake.
+  - **Bag Window** uses Blizzard's own bag item buttons, so using, dragging and selling items is your own click. **Sort** runs Blizzard's own sort when you click it, never in combat. Hiding Blizzard's bag frames and moving our slots happens only out of combat.
+  - **Map+** only moves, scales and fades Blizzard's world map (out of combat), adds a search and a "Find me" button, and adds mouse-wheel zoom to the minimap. When the OpenMap addon is loaded, Map+ leaves the world map alone.
+  - **Pawn scales** are display only: imported stat weights change the upgrade arrows and tooltips, and nothing is equipped for you.
+

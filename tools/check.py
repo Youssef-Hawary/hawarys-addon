@@ -58,6 +58,10 @@ REVIEWED = {
     "QuestGetAutoAccept", "SelectActiveQuest", "SelectAvailableQuest",
     # FrameXML table (UiMapPoint.CreateFromCoordinates in framexml/mixins.md)
     "UiMapPoint",
+    # 1.3.0 – checked in the Forever UI source (Gethe/wow-ui-source, branch forever):
+    # ItemLocation = {} in Blizzard_ObjectAPI/Mainline/ItemLocation.lua; MenuUtil in framexml/mixins.md;
+    # NUM_CONTAINER_FRAMES set in Blizzard_UIPanels_Game/Mainline/ContainerFrame.lua
+    "ItemLocation", "MenuUtil", "NUM_CONTAINER_FRAMES",
     # called by Blizzard's own Forever profession UI (Blizzard_Professions/Camelot) and
     # the Forever auction house window (Blizzard_AuctionHouseUI)
     "GetProfessions", "GetProfessionInfo", "AuctionHouseFrame",

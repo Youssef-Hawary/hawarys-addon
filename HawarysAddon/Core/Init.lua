@@ -254,6 +254,13 @@ end)
 ---------------------------------------------------------------------------
 -- Slash commands
 ---------------------------------------------------------------------------
+-- Modules add their own sub-commands: ns:RegisterSlash("dps", "show or hide the DPS meter", fn)
+ns.slash, ns.slashOrder = {}, {}
+function ns:RegisterSlash(cmd, help, fn)
+    if not ns.slash[cmd] then table.insert(ns.slashOrder, cmd) end
+    ns.slash[cmd] = { help = help, fn = fn }
+end
+
 SLASH_HAWARYSADDON1 = "/ha"
 SLASH_HAWARYSADDON2 = "/hawary"
 SLASH_HAWARYSADDON3 = "/hawarys"
@@ -277,7 +284,10 @@ SlashCmdList.HAWARYSADDON = function(msg)
         ns:Print("/ha bis – best-in-slot finder")
         ns:Print("/ha fortune – today's fortune")
         ns:Print("/ha stats – print the raw stats of the item under your mouse")
+        for _, c in ipairs(ns.slashOrder) do ns:Print("/ha %s – %s", c, ns.slash[c].help) end
         ns:Print("/ha version")
+    elseif ns.slash[cmd] then
+        ns.Safe(ns.slash[cmd].fn, (msg or ""):match("^%s*%S+%s*(.-)%s*$"))
     elseif cmd == "version" then
         ns:Print("%s %s", L.ADDON_TITLE, ns.version)
     elseif cmd == "stats" then

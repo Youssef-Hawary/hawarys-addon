@@ -1,5 +1,33 @@
 # Changelog
 
+## 1.3.0 (2026-11-14)
+
+Features like five popular CurseForge addons (Pawn, Bagnon, Auctionator, Details!/Skada and OpenMap), written from scratch for WoW Forever:
+
+- **Pawn (Gear & Upgrades):** import Pawn scale strings, export your weights as a Pawn scale, delete scales, and an optional raw score in tooltips. Imported scales appear in the stat profile list.
+- **Bag Window (Bagnon style):**
+  - All bags in one window (B key, vendors and the bank open it), with search, Sort, gold and free slots.
+  - Item levels, upgrade arrows and junk coins.
+  - Every character's bags and bank, even offline.
+  - Real Blizzard item buttons, so right-click to use and drag work as normal. `/ha inv`
+- **DPS Meter (Details!/Skada style):**
+  - Damage, DPS, healing, HPS, absorbs, damage taken, avoidable damage, interrupts, dispels, deaths and enemy damage taken.
+  - Current, overall and earlier fights, a spell breakdown per player, and Report to group chat.
+  - Movable and resizable. Built on Blizzard's own damage meter data. `/ha dps`
+- **Auction House+ (Auctionator style):** a panel next to the auction house with three tabs.
+  - **Shopping:** lists (with "exact" terms), search history and crafting needs; click a result to see listings and buy.
+  - **Selling:** undercut in copper or percent, a price floor, deposit, duration and Post.
+  - **Cancelling:** an undercut check and one-click cancel.
+  - Every buy, post and cancel is one click by you.
+- **Map+ (OpenMap/Leatrix style):**
+  - Move and resize the world map, which remembers its place.
+  - The map fades while you run. A bar adds "Find me" and a zone, city and dungeon search.
+  - Optional: reopen the map where you left it. Mouse-wheel zoom on the minimap.
+  - It steps aside when the OpenMap addon is installed.
+- `/ha` sub-commands can now come from modules (`/ha dps`, `/ha inv`); `/ha help` lists them.
+- Safety: docs/SAFETY.md updated. In combat the meter only passes the game's hidden values to the game's own display functions.
+- Tests: 44.
+
 ## 1.2.0 (2026-11-12)
 
 - **Quest Tracker+:**

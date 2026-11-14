@@ -679,6 +679,72 @@ env.strsplit = function(sep, str)
     return unpack(out)
 end
 
+-- 1.3.0 mocks: damage meter, bag window, auction house+, map+
+env.C_AddOns.IsAddOnLoaded = function() return false, false end
+env.UnitInRaid = function() return nil end
+env.UnitInParty = function() return false end
+env.AbbreviateLargeNumbers = function(n) return tostring(n) end
+env.SecondsToClock = function(s) return tostring(s) end
+env.IsPlayerMoving = function() return false end
+env.IsControlKeyDown = function() return false end
+env.MenuUtil = { CreateContextMenu = record("contextmenu") }
+env.C_ChatInfo = { SendChatMessage = record("chat") }
+env.C_Spell.GetSpellTexture = function() return 1 end
+env.Enum.DamageMeterType = { DamageDone = 0, Dps = 1, HealingDone = 2, Hps = 3, Absorbs = 4, Interrupts = 5,
+    Dispels = 6, DamageTaken = 7, AvoidableDamageTaken = 8, Deaths = 9, EnemyDamageTaken = 10 }
+env.Enum.DamageMeterSessionType = { Overall = 0, Current = 1, Expired = 2 }
+env.Enum.UIMapType.Dungeon = 4
+local meterName = "Tester"
+env.C_DamageMeter = {
+    IsDamageMeterAvailable = function() return true, "" end,
+    GetCombatSessionFromType = function() return { maxAmount = 1000, totalAmount = 1500, combatSources = {
+        { name = meterName, classFilename = "WARRIOR", totalAmount = 1000, amountPerSecond = 50, isLocalPlayer = true, sourceGUID = "Player-1" },
+        { name = "Friend", classFilename = "MAGE", totalAmount = 500, amountPerSecond = 25, sourceGUID = "Player-2" } } } end,
+    GetCombatSessionFromID = function() return nil end,
+    GetCombatSessionSourceFromType = function() return { maxAmount = 600, combatSpells = { { spellID = 78, totalAmount = 600, amountPerSecond = 30 } } } end,
+    GetAvailableCombatSessions = function() return { { sessionID = 3, name = "Boar", durationSeconds = 12 } } end,
+    ResetAllCombatSessions = record("meterreset"),
+}
+env.IsBagOpen = function() return false end
+env.CloseAllBags = record("closebags")
+env.HandleModifiedItemClick = function() end
+env.SetItemButtonQuality = function() end
+env.SetItemButtonCount = function() end
+env.SetItemButtonDesaturated = function() end
+env.C_Container.GetContainerItemQuestInfo = function() return {} end
+env.C_Container.SortBags = record("sortbags")
+env.C_Container.SortBankBags = record("sortbank")
+env.ItemLocation = { CreateFromBagAndSlot = function(_, b, sl) return { bag = b, slot = sl } end }
+local ah = env.C_AuctionHouse
+ah.IsThrottledMessageSystemReady = function() return true end
+ah.SendBrowseQuery = record("browse")
+ah.SearchForItemKeys = record("searchkeys")
+ah.MakeItemKey = function(id) return { itemID = id } end
+ah.GetItemKeyInfo = function() return { itemName = "Linen Cloth", iconFileID = 1, isCommodity = true, quality = 1 } end
+ah.SendSellSearchQuery = record("sellsearch")
+ah.GetNumCommoditySearchResults = function() return 2 end
+ah.StartCommoditiesPurchase = record("startbuy")
+ah.ConfirmCommoditiesPurchase = record("confirmbuy")
+ah.CancelCommoditiesPurchase = record("cancelbuy")
+ah.PlaceBid = record("placebid")
+ah.GetItemCommodityStatus = function() return 2 end
+ah.GetItemKeyFromItem = function() return { itemID = 2589 } end
+ah.IsSellItemValid = function() return true end
+ah.CalculateCommodityDeposit = function() return 100 end
+ah.CalculateItemDeposit = function() return 100 end
+ah.SupportsCopperValues = function() return true end
+ah.PostCommodity = function() calls.post = (calls.post or 0) + 1; return false end
+ah.PostItem = function() calls.post = (calls.post or 0) + 1; return false end
+ah.GetOwnedAuctions = function() return { { auctionID = 9, itemKey = { itemID = 2589 }, status = 0, quantity = 5, buyoutAmount = 500 } } end
+ah.GetCancelCost = function() return 10 end
+ah.CanCancelAuction = function() return true end
+ah.CancelAuction = record("cancelauction")
+env.C_Map.GetFallbackWorldMapID = function() return 947 end
+env.C_Map.GetMapChildrenInfo = function() return {
+    { name = "Elwynn Forest", mapID = 1429, mapType = 3 }, { name = "Stormwind City", mapID = 1453, mapType = 3 },
+    { name = "Deadmines", mapID = 291, mapType = 4 }, { name = "Kalimdor", mapID = 1414, mapType = 2 } } end
+env.WorldMapFrame.SetMapID = function(_, id) calls.setmap = id end
+
 local function loadTOC()
     local addonNS = {}
     local toc = assert(io.open(ADDON .. "HawarysAddon.toc")):read("*a")
@@ -1103,6 +1169,137 @@ test("1.2.0 smoke: Arabic language and every skin load", function()
     for _, page in ipairs({ "home", "general", "skins", "funstats", "gearplus", "tracker", "journey" }) do B:OpenWindow(page) end
     env.HawarysAddonDB.general.language = "en"
     env.HawarysAddonDB.general.theme = "neon"
+end)
+
+test("1.3.0 pure logic: Pawn scales, undercut, money, search, bags, meter, map", function()
+    local D2 = A.GearData
+    local sc = assert(D2.ParsePawnScale('( Pawn: v1: "Arms Warrior": Class=Warrior, Strength=1.00, Stamina=0.5, CritRating=0.80, MeleeDps=3.1, RangedDps=1.2, Foo=9 )'))
+    eq(sc.label, "Arms Warrior"); eq(sc.w.STR, 1); eq(sc.w.STA, 0.5); eq(sc.w.CRIT, 0.8); eq(sc.w.DPS, 3.1, "bigger DPS kept")
+    eq(D2.ParsePawnScale("hello"), nil, "not a scale")
+    eq(D2.ParsePawnScale('( Pawn: v1: "X": Foo=1 )'), nil, "no known stats")
+    local out = D2.ExportPawnScale("Arms Warrior", sc.w)
+    local back = assert(D2.ParsePawnScale(out))
+    eq(back.w.CRIT, 0.8, "round trip"); eq(back.label, "Arms Warrior")
+    D2.custom.CUSTOM_1 = { id = "CUSTOM_1", label = "Mine", w = { STR = 2 } }
+    eq(D2.FindProfile("CUSTOM_1").label, "Mine", "custom scales are found")
+    D2.custom.CUSTOM_1 = nil
+
+    local AH = A.modules.ahplus
+    eq(AH.Undercut(1000, 1, 0, 0), 999)
+    eq(AH.Undercut(1000, 1, 10, 0), 900, "percent wins when cheaper")
+    local p, floored = AH.Undercut(1000, 1, 0, 1500); eq(p, 1500); eq(floored, true)
+    eq(AH.Undercut(nil, 1, 0, 300), 300, "nothing listed: use the floor")
+    eq(AH.RoundPrice(12345, false), 12300); eq(AH.RoundPrice(50, false), 100); eq(AH.RoundPrice(12345, true), 12345)
+    eq(AH.ParseMoney("12g 50s 3c"), 125003); eq(AH.ParseMoney("12.5"), 125000); eq(AH.ParseMoney("12,5"), 125000)
+    eq(AH.ParseMoney("50s"), 5000); eq(AH.ParseMoney("7c"), 7); eq(AH.ParseMoney(""), nil); eq(AH.ParseMoney("abc"), nil)
+    local t, exact = AH.ParseTerm('"Linen Cloth"'); eq(t, "Linen Cloth"); eq(exact, true)
+    t, exact = AH.ParseTerm("  linen "); eq(t, "linen"); eq(exact, false)
+    local h = AH.PushHistory({ "a", "b", "c" }, "b", 3); eq(h[1], "b"); eq(#h, 3)
+    AH.PushHistory(h, "d", 3); eq(h[1], "d"); eq(#h, 3)
+
+    local BW = A.modules.bagwindow
+    eq(BW.LinkName("|cffffffff|Hitem:2589::|h[Linen Cloth]|h|r"), "Linen Cloth"); eq(BW.LinkName(nil), nil)
+    eq(BW.Matches("lin", "Linen Cloth"), true); eq(BW.Matches("silk", "Linen Cloth"), false); eq(BW.Matches("", nil), true)
+    local x, y = BW.GridPos(12, 10, 37); eq(x, 41); eq(y, -41)
+    local snap = BW.Pack(3, function(slot) if slot == 2 then return "link", 4 end end)
+    eq(snap.size, 3); eq(snap[2][2], 4); eq(snap[1], nil)
+
+    local M = A.modules.meter
+    eq(M.Cycle(11, 11, 1), 1); eq(M.Cycle(1, 11, -1), 11); eq(M.Cycle(3, 11, 1), 4)
+    eq(M.ClampOffset(20, 50, 8), 12); eq(M.ClampOffset(5, 3, 8), 0); eq(M.ClampOffset(20, -2, 8), 0)
+
+    local MP = A.modules.mapplus
+    local maps = { { name = "Elwynn Forest" }, { name = "Stormwind City" }, { name = "Westfall" }, { name = "Redridge Mountains" } }
+    local r = MP.FindMaps(maps, "st", 5)
+    eq(r[1].name, "Stormwind City", "starts-with first"); eq(r[2].name, "Elwynn Forest"); eq(r[3].name, "Westfall")
+    eq(#MP.FindMaps(maps, "", 5), 0)
+    eq(MP.ZoomStep(0, -1, 5), 0); eq(MP.ZoomStep(5, 1, 5), 5); eq(MP.ZoomStep(2, 1, 5), 3)
+end)
+
+test("1.3.0 smoke: DPS meter, bag window, auction house+, map+, Pawn import", function()
+    for _, page in ipairs({ "meter", "bagwindow", "ahplus", "mapplus", "gear" }) do
+        truthy(A.modules[page], "module " .. page)
+        A:OpenWindow(page)
+    end
+    -- DPS meter: modes, breakdown, report only out of combat
+    local M = A.modules.meter
+    M:Set("show", true)
+    M:SetMode(1); M:SetMode(-1)
+    M:Refresh()
+    M:OpenSource({ name = "Tester", sourceGUID = "Player-1", classFilename = "WARRIOR" })
+    M:Refresh()
+    M:Back()
+    calls.chat = 0
+    M:Report(); eq(calls.chat, 3, "title + 2 players")
+    inCombat = true; M:Report(); eq(calls.chat, 3, "no report in combat"); inCombat = false
+    env.issecretvalue = function(v) return v == "SECRET" end
+    meterName = "SECRET"
+    M:Refresh() -- secret names are only handed to SetText
+    calls.chat = 0; M:Report(); eq(calls.chat, 0, "secret values never reach chat")
+    env.issecretvalue = function() return false end
+    meterName = "Tester"
+    env.SlashCmdList.HAWARYSADDON("dps")
+    M:ResetData(); eq(calls.meterreset, 1)
+
+    -- Bag window: live slots, snapshot for offline view, sort only on click and out of combat
+    local BW = A.modules.bagwindow
+    env.C_Container.GetContainerNumSlots = function(bag) return bag == 0 and 2 or 0 end
+    env.C_Container.GetContainerItemInfo = function(_, slot)
+        if slot == 1 then return { itemID = 2589, stackCount = 5, quality = 1, iconFileID = 1, hyperlink = "|cffffffff|Hitem:2589::|h[Linen Cloth]|h|r" } end
+    end
+    BW:SaveBags()
+    eq(A.db.chars[A:CharKey()].slots.bags[0].size, 2, "bag snapshot saved")
+    BW:Toggle()
+    BW:Layout()
+    env.SlashCmdList.HAWARYSADDON("inv")
+    fire("BAG_UPDATE_DELAYED")
+
+    -- Auction House+: search, two clicks per purchase, one post per click
+    fire("AUCTION_HOUSE_SHOW")
+    local AH = A.modules.ahplus
+    calls.browse, calls.startbuy, calls.confirmbuy, calls.post = 0, 0, 0, 0
+    AH:Search({ '"Linen Cloth"' }); eq(calls.browse, 1)
+    env.C_AuctionHouse.GetBrowseResults = function() return { { itemKey = { itemID = 2589 }, minPrice = 55, totalQuantity = 40 } } end
+    fire("AUCTION_HOUSE_BROWSE_RESULTS_UPDATED")
+    AH:OpenDetail({ itemKey = { itemID = 2589 }, name = "Linen Cloth", left = "Linen Cloth" })
+    fire("COMMODITY_SEARCH_RESULTS_UPDATED", 2589)
+    AH:BuyClick(); eq(calls.startbuy, 1); eq(calls.confirmbuy, 0, "first click only asks the price")
+    fire("COMMODITY_PRICE_UPDATED", 77, 77)
+    AH:BuyClick(); eq(calls.confirmbuy, 1, "second click buys")
+    AH:BuyClick(); eq(calls.confirmbuy, 1, "no repeat without a new price check")
+    AH:ShowTab("sell")
+    env.C_Container.GetContainerItemInfo = function(_, slot)
+        if slot == 1 then return { itemID = 2589, stackCount = 5, quality = 1, iconFileID = 1, hyperlink = "|cffffffff|Hitem:2589::|h[Linen Cloth]|h|r" } end
+    end
+    AH:PaintSell()
+    AH:SelectSell({ loc = { bag = 0, slot = 1 }, itemID = 2589, link = "x", count = 5 })
+    fire("COMMODITY_SEARCH_RESULTS_UPDATED", 2589)
+    AH.pages.sell.price.GetText = function() return "1g 5s" end
+    AH.pages.sell.qty.GetText = function() return "5" end
+    AH:PostClick(); eq(calls.post, 1, "one post per click")
+    inCombat = false
+    AH:ShowTab("cancel")
+    fire("OWNED_AUCTIONS_UPDATED")
+    AH:ScanUndercuts()
+    fire("COMMODITY_SEARCH_RESULTS_UPDATED", 2589)
+    fire("AUCTION_HOUSE_CLOSED")
+
+    -- Map+: show hook, search, find me
+    local onShow = env.WorldMapFrame:GetScript("OnShow")
+    if onShow then onShow(env.WorldMapFrame) end
+    local MPm = A.modules.mapplus
+    MPm:Set("scale", 0.8)
+    eq(#MPm.FindMaps({ { name = "Deadmines" } }, "dead", 3), 1)
+
+    -- Pawn: import picks the new scale; delete goes back to Auto
+    local G = A.modules.gear
+    G:DB().custom.CUSTOM_9 = { label = "Test", w = { STR = 1 } }
+    G:LoadCustomScales()
+    G:Set("profile", "CUSTOM_9")
+    eq(G:Profile().label, "Test")
+    G:DeleteCurrentScale()
+    eq(G:Get("profile"), "auto")
+    env.C_Container.GetContainerNumSlots = function() return 0 end
 end)
 
 print(string.format("\n%d passed, %d failed", passed, failed))

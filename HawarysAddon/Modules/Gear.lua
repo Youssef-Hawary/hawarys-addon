@@ -8,7 +8,8 @@ local Gear = ns:NewModule("gear", {
     title = L.MOD_GEAR,
     desc = L.MOD_GEAR_DESC,
     order = 1,
-    defaults = { tooltip = true, ilvl = true, bags = true, quest = true, questSelect = false, toast = true },
+    defaults = { tooltip = true, ilvl = true, bags = true, quest = true, questSelect = false, toast = true,
+        rawScore = false, custom = {} },
     charDefaults = { profile = "auto" },
 })
 
@@ -18,8 +19,18 @@ Gear.options = {
         local _, classFile = UnitClass("player")
         for _, p in ipairs(D.profiles[classFile] or {}) do out[#out + 1] = { value = p.id, text = p.label } end
         out[#out + 1] = { value = D.GENERIC.id, text = D.GENERIC.label }
+        for _, id in ipairs(ns.Util.sortedKeys(D.custom)) do
+            out[#out + 1] = { value = id, text = "|cff38c6f4" .. D.custom[id].label .. "|r" }
+        end
         return out
     end },
+    { type = "button", label = L.GEAR_PAWN_IMPORT, desc = L.GEAR_PAWN_IMPORT_DESC, buttonText = L.IMPORT,
+      onClick = function() Gear:ImportScaleDialog() end },
+    { type = "button", label = L.GEAR_PAWN_EXPORT, desc = L.GEAR_PAWN_EXPORT_DESC, buttonText = L.EXPORT,
+      onClick = function() Gear:ExportScaleDialog() end },
+    { type = "button", label = L.GEAR_PAWN_DELETE, desc = L.GEAR_PAWN_DELETE_DESC, buttonText = L.DELETE, kind = "danger",
+      onClick = function() Gear:DeleteCurrentScale() end },
+    { type = "toggle", key = "rawScore", label = L.GEAR_RAW, desc = L.GEAR_RAW_DESC },
     { type = "toggle", key = "tooltip", label = L.GEAR_TOOLTIP, desc = L.GEAR_TOOLTIP_DESC },
     { type = "toggle", key = "ilvl", label = L.GEAR_ILVL, desc = L.GEAR_ILVL_DESC },
     { type = "toggle", key = "bags", label = L.GEAR_BAGS, desc = L.GEAR_BAGS_DESC },
@@ -149,6 +160,8 @@ local function OnTooltipItem(tooltip)
             tooltip:AddLine(" ")
             tooltip:AddDoubleLine(MARK .. " |cff38c6f4Hawary's|r  " .. L.GEAR_PROFILE_LINE:format(Gear:Profile().label), text)
             added = true
+            local score = Gear:Get("rawScore") and Gear:ScoreLink(link)
+            if score then tooltip:AddDoubleLine(L.GEAR_RAW_LINE, string.format("%.1f", score), 0.47, 0.50, 0.56, 0.68, 0.72, 0.78) end
         end
     end
     if Gear:Get("ilvl") then
@@ -342,7 +355,50 @@ end
 ---------------------------------------------------------------------------
 -- Module lifecycle
 ---------------------------------------------------------------------------
+---------------------------------------------------------------------------
+-- Your own scales (Pawn-style): import / export / delete
+---------------------------------------------------------------------------
+function Gear:LoadCustomScales()
+    wipe(D.custom)
+    for id, sc in pairs(self:DB().custom or {}) do
+        if type(sc) == "table" and type(sc.w) == "table" then
+            D.custom[id] = { id = id, label = sc.label or id, role = "DAMAGER", w = sc.w }
+        end
+    end
+end
+
+function Gear:ImportScaleDialog()
+    ns.W.TextDialog(L.GEAR_PAWN_PASTE, "", false, function(text)
+        local scale, why = D.ParsePawnScale(text)
+        if not scale then ns:Print(L.GEAR_PAWN_BAD, why or "?"); return end
+        local store = self:DB().custom
+        local n = 1
+        while store["CUSTOM_" .. n] do n = n + 1 end
+        local id = "CUSTOM_" .. n
+        store[id] = { label = scale.label, w = scale.w }
+        self:LoadCustomScales()
+        self:Set("profile", id)
+        ns:Print(L.GEAR_PAWN_OK, scale.label)
+    end)
+end
+
+function Gear:ExportScaleDialog()
+    local p = self:Profile()
+    ns.W.TextDialog(L.GEAR_PAWN_EXPORT, D.ExportPawnScale(p.label, p.w), true)
+end
+
+function Gear:DeleteCurrentScale()
+    local id = self:Get("profile")
+    if not (id and D.custom[id]) then ns:Print(L.GEAR_PAWN_NOT_CUSTOM); return end
+    local label = D.custom[id].label
+    self:DB().custom[id] = nil
+    self:LoadCustomScales()
+    self:Set("profile", "auto")
+    ns:Print(L.GEAR_PAWN_DELETED, label)
+end
+
 function Gear:OnInitialize()
+    self:LoadCustomScales()
     TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip)
         ns.Safe(OnTooltipItem, tooltip)
     end)
@@ -399,6 +455,7 @@ end
 
 function Gear:OnSettingChanged(key)
     if key == "profile" then self:ResetScores() end
+    if key == "rawScore" then return end
     if key == "profile" or key == "bags" then self:RefreshOpenBags() end
     if key == "quest" and not self:Get("quest") then HideMarks() end
 end
